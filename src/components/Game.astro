@@ -1,0 +1,314 @@
+---
+// Game.astro - School Map Navigation Game
+---
+
+<div class="game-container">
+  <div class="status-bar" id="status-bar">You are at: Starting Point</div>
+  
+  <div class="grid-container">
+    <div class="grid" id="grid">
+      <!-- Grid cells will be rendered by JavaScript -->
+    </div>
+  </div>
+  
+  <div class="controls">
+    <button class="control-btn" id="btn-left">⬅️ Left</button>
+    <button class="control-btn" id="btn-straight">⬆️ Straight</button>
+    <button class="control-btn" id="btn-right">➡️ Right</button>
+    <button class="control-btn reset-btn" id="btn-reset">🔄 Reset</button>
+  </div>
+</div>
+
+<style>
+  .game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    padding: 1vh 2vw;
+    box-sizing: border-box;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .status-bar {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 1.5vh 3vw;
+    border-radius: 12px;
+    font-size: clamp(14px, 2.5vh, 24px);
+    font-weight: 600;
+    color: #333;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2vh;
+    text-align: center;
+    min-width: 250px;
+  }
+
+  .grid-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-height: 65vh;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    gap: 2px;
+    aspect-ratio: 1;
+    width: min(65vh, 90vw);
+    height: min(65vh, 90vw);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .cell {
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(8px, 1.2vh, 12px);
+    text-align: center;
+    position: relative;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .cell.location {
+    background: rgba(255, 223, 186, 0.95);
+    border: 2px solid #f5a623;
+  }
+
+  .cell.road {
+    background: rgba(210, 210, 210, 0.6);
+    border: 1px solid #999;
+  }
+
+  .cell .icon {
+    font-size: clamp(12px, 2vh, 20px);
+  }
+
+  .cell .name {
+    font-size: clamp(6px, 0.9vh, 10px);
+    font-weight: 500;
+    color: #555;
+    line-height: 1.1;
+    padding: 0 2px;
+  }
+
+  .cell.has-player {
+    background: rgba(76, 175, 80, 0.3);
+    border: 2px solid #4caf50;
+  }
+
+  .player {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .player-arrow {
+    width: clamp(20px, 4vh, 32px);
+    height: clamp(20px, 4vh, 32px);
+    color: #2e7d32;
+  }
+
+  .controls {
+    display: flex;
+    gap: 2vw;
+    padding: 2vh 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .control-btn {
+    padding: 1.5vh 3vw;
+    font-size: clamp(14px, 2vh, 20px);
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+    min-width: 100px;
+  }
+
+  .control-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .control-btn:active {
+    transform: translateY(0);
+  }
+
+  .reset-btn {
+    background: #ff6b6b;
+    color: white;
+  }
+
+  .reset-btn:hover {
+    background: #ee5a5a;
+  }
+</style>
+
+<script is:inline>
+  // Location data
+  const locations = [
+    { x: 2, y: 1, name: "Music Room", icon: "🎵" },
+    { x: 7, y: 1, name: "Library", icon: "📚" },
+    { x: 1, y: 3, name: "Art Room", icon: "🎨" },
+    { x: 5, y: 4, name: "Principal's Office", icon: "👔" },
+    { x: 8, y: 5, name: "Science Room", icon: "🔬" },
+    { x: 3, y: 7, name: "Gym", icon: "🏀" },
+    { x: 6, y: 8, name: "Nurse's Office", icon: "🏥" },
+  ];
+
+  // Roads/paths data - add your pathways here
+  const roads = [
+    // Bottom row - main corridor
+    { x: 0, y: 9 }, { x: 1, y: 9 }, { x: 2, y: 9 }, { x: 3, y: 9 }, { x: 4, y: 9 },
+    { x: 5, y: 9 }, { x: 6, y: 9 }, { x: 7, y: 9 }, { x: 8, y: 9 }, { x: 9, y: 9 },
+    // Middle corridors (placeholders - add more as needed)
+    { x: 5, y: 5 }, { x: 5, y: 6 }, { x: 5, y: 7 }, { x: 5, y: 8 },
+    { x: 3, y: 5 }, { x: 3, y: 6 },
+  ];
+
+  // Game state
+  let playerPos = { x: 0, y: 9 };
+  let playerHeading = 0; // 0=North, 1=East, 2=South, 3=West
+
+  // Direction vectors: [dx, dy] for each heading
+  const directions = [
+    { dx: 0, dy: -1 },  // North (up on grid)
+    { dx: 1, dy: 0 },   // East (right)
+    { dx: 0, dy: 1 },   // South (down on grid)
+    { dx: -1, dy: 0 },  // West (left)
+  ];
+
+  // Heading to rotation degrees
+  const headingToRotation = [0, 90, 180, 270];
+
+  function getLocationAt(x, y) {
+    return locations.find(loc => loc.x === x && loc.y === y);
+  }
+
+  function isRoad(x, y) {
+    return roads.some(road => road.x === x && road.y === y);
+  }
+
+  // SVG arrows for each direction
+  const arrowSvgs = {
+    // North (up)
+    0: `<svg viewBox="0 0 24 24" fill="currentColor" class="player-arrow"><path d="M12 4l-8 8h5v8h6v-8h5z"/></svg>`,
+    // East (right)
+    1: `<svg viewBox="0 0 24 24" fill="currentColor" class="player-arrow"><path d="M20 12l-8-8v5H4v6h8v5z"/></svg>`,
+    // South (down)
+    2: `<svg viewBox="0 0 24 24" fill="currentColor" class="player-arrow"><path d="M12 20l8-8h-5V4h-6v8H4z"/></svg>`,
+    // West (left)
+    3: `<svg viewBox="0 0 24 24" fill="currentColor" class="player-arrow"><path d="M4 12l8 8v-5h8v-6h-8V4z"/></svg>`,
+  };
+
+  function renderGrid() {
+    const grid = document.getElementById("grid");
+    if (!grid) return;
+    
+    grid.innerHTML = "";
+
+    for (let y = 0; y < 10; y++) {
+      for (let x = 0; x < 10; x++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        
+        const location = getLocationAt(x, y);
+        const isPlayerHere = playerPos.x === x && playerPos.y === y;
+
+        if (location) {
+          cell.classList.add("location");
+          cell.innerHTML = `
+            <span class="icon">${location.icon}</span>
+            <span class="name">${location.name}</span>
+          `;
+        } else if (isRoad(x, y)) {
+          cell.classList.add("road");
+        }
+
+        if (isPlayerHere) {
+          cell.classList.add("has-player");
+          const playerEl = document.createElement("span");
+          playerEl.className = "player";
+          playerEl.innerHTML = arrowSvgs[playerHeading];
+          cell.appendChild(playerEl);
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  function updateStatus() {
+    const statusBar = document.getElementById("status-bar");
+    if (!statusBar) return;
+
+    const location = getLocationAt(playerPos.x, playerPos.y);
+    if (location) {
+      statusBar.textContent = `You are at: ${location.icon} ${location.name}`;
+    } else {
+      statusBar.textContent = `You are at: Hallway (${playerPos.x}, ${playerPos.y})`;
+    }
+  }
+
+  function turnLeft() {
+    playerHeading = (playerHeading + 3) % 4;
+    renderGrid();
+  }
+
+  function turnRight() {
+    playerHeading = (playerHeading + 1) % 4;
+    renderGrid();
+  }
+
+  function goStraight() {
+    const dir = directions[playerHeading];
+    const newX = playerPos.x + dir.dx;
+    const newY = playerPos.y + dir.dy;
+
+    // Bounds check
+    if (newX >= 0 && newX <= 9 && newY >= 0 && newY <= 9) {
+      playerPos = { x: newX, y: newY };
+      renderGrid();
+      updateStatus();
+    }
+  }
+
+  function reset() {
+    playerPos = { x: 0, y: 9 };
+    playerHeading = 0;
+    renderGrid();
+    updateStatus();
+  }
+
+  // Initialize
+  document.addEventListener("DOMContentLoaded", () => {
+    renderGrid();
+    updateStatus();
+
+    document.getElementById("btn-left")?.addEventListener("click", turnLeft);
+    document.getElementById("btn-right")?.addEventListener("click", turnRight);
+    document.getElementById("btn-straight")?.addEventListener("click", goStraight);
+    document.getElementById("btn-reset")?.addEventListener("click", reset);
+  });
+</script>
