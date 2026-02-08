@@ -5,9 +5,16 @@ export async function GET({ request, env }) {
   const type = url.searchParams.get("type"); // 'giphy-cat' or 'unsplash'
   const query = url.searchParams.get("query"); // e.g. 'fruit'
 
-  // Load keys from Cloudflare 'env' object (production) or process.env (local)
-  const GIPHY_KEY = env?.GIPHY_KEY || import.meta.env.GIPHY_KEY;
-  const UNSPLASH_KEY = env?.UNSPLASH_KEY || import.meta.env.UNSPLASH_KEY;
+  // Load keys from Cloudflare 'env' object (production) or process.env (local/node)
+  const GIPHY_KEY = env?.GIPHY_KEY || import.meta.env.GIPHY_KEY || process.env.GIPHY_KEY;
+  const UNSPLASH_KEY = env?.UNSPLASH_KEY || import.meta.env.UNSPLASH_KEY || process.env.UNSPLASH_KEY;
+
+  if (type === "giphy-cat" && !GIPHY_KEY) {
+    console.error("Giphy API call failed: GIPHY_KEY is missing in the current environment.");
+  }
+  if (type === "unsplash" && !UNSPLASH_KEY) {
+    console.error("Unsplash API call failed: UNSPLASH_KEY is missing in the current environment.");
+  }
 
   try {
     if (type === "giphy-cat") {
