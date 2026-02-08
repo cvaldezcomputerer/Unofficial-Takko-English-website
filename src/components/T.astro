@@ -1,0 +1,35 @@
+---
+/**
+ * T Component for translations
+ * Supports English (en) and Japanese (ja)
+ * Usage:
+ * <T>
+ *   <span slot="en">Standard English text</span>
+ *   <span slot="ja">日本語</span>
+ * </T>
+ */
+---
+
+<span class="t-wrapper">
+  <span class="t-en"><slot name="en" /></span>
+  <span class="t-ja"><slot name="ja" /></span>
+</span>
+
+<style>
+  .t-wrapper {
+    display: inline;
+  }
+  
+  .t-ja {
+    display: none;
+  }
+
+  /* Global visibility rules handled by body class */
+  :global(body.lang-ja) .t-en {
+    display: none;
+  }
+  
+  :global(body.lang-ja) .t-ja {
+    display: inline;
+  }
+</style>

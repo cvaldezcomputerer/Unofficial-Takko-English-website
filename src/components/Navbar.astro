@@ -8,20 +8,46 @@
       <a href="/about" data-translate="about">About</a>
       <a href="/game" data-translate="game">Game</a>
       <a href="https://bloggydoggy.com/" data-translate="blog">Blog</a>
-      <a href="/contact" data-translate="contact">Contact</a>
+      <a href="https://bloggydoggy.com/contact/" data-translate="contact">Contact</a>
       
-      <button class="lang-toggle">
+      <button class="lang-toggle" id="lang-toggle">
         <i class="fas fa-language"></i>
-        <span class="lang-text">日本語</span>
+        <span class="lang-text" id="lang-text">日本語</span>
       </button>
     </div>
   </div>
 </nav>
 
+<script is:inline>
+  function updateLangUI(isJa) {
+    const langText = document.getElementById('lang-text');
+    if (langText) {
+      langText.textContent = isJa ? 'English' : '日本語';
+    }
+    if (isJa) {
+      document.body.classList.add('lang-ja');
+    } else {
+      document.body.classList.remove('lang-ja');
+    }
+  }
+
+  // Initial load
+  const savedLang = localStorage.getItem('site-lang');
+  const isJa = savedLang === 'ja';
+  updateLangUI(isJa);
+
+  // Toggle handler
+  document.getElementById('lang-toggle')?.addEventListener('click', () => {
+    const currentIsJa = document.body.classList.contains('lang-ja');
+    const newIsJa = !currentIsJa;
+    localStorage.setItem('site-lang', newIsJa ? 'ja' : 'en');
+    updateLangUI(newIsJa);
+  });
+</script>
+
 <style>
   .main-nav {
     background: var(--color-nav-bg);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 1rem 0;
     width: 100%;
     position: sticky;

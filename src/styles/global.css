@@ -5,6 +5,7 @@
   box-sizing: border-box;
 }
 
+html,
 body,
 h1,
 h2,
@@ -16,6 +17,7 @@ blockquote,
 dl,
 dd {
   margin: 0;
+  padding: 0;
 }
 
 ul[role='list'],
@@ -23,14 +25,29 @@ ol[role='list'] {
   list-style: none;
 }
 
-html:focus-within {
+html {
+  height: 100%;
   scroll-behavior: smooth;
 }
 
 body {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   text-rendering: optimizeSpeed;
-  line-height: 1.5;
+  line-height: 1.6;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: 0.02em;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
 
 a:not([class]) {
@@ -70,7 +87,7 @@ select {
   /* Colors */
   --color-primary: #557153; /* dark green */
   --color-secondary: #94b49f; /* light green */
-  --color-accent: #ff7e33; /* kept from original, or maybe #ffd93d yellow from new palette? */
+  --color-accent: #ff7e33;
   --color-text: #333;
   --color-bg: #f8f3e6; /* light beige */
   --color-white: #fff;
@@ -93,12 +110,10 @@ select {
   --font-heading: var(--font-body);
 }
 
-body {
-  min-height: 100vh;
-  text-rendering: optimizeSpeed;
-  line-height: 1.5;
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-body);
+footer {
+  text-align: center;
+  padding: 2rem;
+  background: var(--color-dark-green);
+  color: white;
+  margin-top: auto;
 }
-

@@ -1,13 +1,24 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
+import T from '../components/T.astro';
 ---
 
 <Layout title="Takko Town Games">
   <div class="banner">
     <div class="banner-content">
-      <h1>Game Center</h1>
-      <p>Play and Learn with Takko!</p>
+      <h1>
+        <T>
+          <span slot="en">Game Center</span>
+          <span slot="ja">ゲームセンター</span>
+        </T>
+      </h1>
+      <p>
+        <T>
+          <span slot="en">Play and Learn with Takko!</span>
+          <span slot="ja">タッコと一緒に遊んで学ぼう！</span>
+        </T>
+      </p>
     </div>
   </div>
 
@@ -16,8 +27,18 @@ import Navbar from '../components/Navbar.astro';
   <div class="container">
     <main class="content">
       <div class="intro">
-        <h2>Choose a Game</h2>
-        <p>Select a game below to start playing!</p>
+        <h2>
+          <T>
+            <span slot="en">Choose a Game</span>
+            <span slot="ja">ゲームを選ぶ</span>
+          </T>
+        </h2>
+        <p>
+          <T>
+            <span slot="en">Select a game below to start playing!</span>
+            <span slot="ja">下のゲームを選んで遊び始めましょう！</span>
+          </T>
+        </p>
       </div>
       
       <div class="games-grid">
@@ -27,9 +48,25 @@ import Navbar from '../components/Navbar.astro';
                 <div class="icon">🗺️</div>
             </div>
             <div class="card-content">
-                <h3>School Map Game</h3>
-                <p>Navigate the school, find rooms, and explore the map!</p>
-                <span class="play-btn">Play Now <i class="fas fa-play"></i></span>
+                <h3>
+                  <T>
+                    <span slot="en">School Map Game</span>
+                    <span slot="ja">校内マップゲーム</span>
+                  </T>
+                </h3>
+                <p>
+                  <T>
+                    <span slot="en">Navigate the school, find rooms, and explore the map!</span>
+                    <span slot="ja">学校を案内して、部屋を見つけ、マップを探索しよう！</span>
+                  </T>
+                </p>
+                <span class="play-btn">
+                  <T>
+                    <span slot="en">Play Now</span>
+                    <span slot="ja">今すぐプレイ</span>
+                  </T>
+                  <i class="fas fa-play"></i>
+                </span>
             </div>
         </a>
 
@@ -39,9 +76,25 @@ import Navbar from '../components/Navbar.astro';
                 <div class="icon">🔤</div>
             </div>
             <div class="card-content">
-                <h3>Letter Flip Game</h3>
-                <p>Flip cards, learn letters, and discover animals!</p>
-                <span class="play-btn">Play Now <i class="fas fa-play"></i></span>
+                <h3>
+                  <T>
+                    <span slot="en">Letter Flip Game</span>
+                    <span slot="ja">文字めくりゲーム</span>
+                  </T>
+                </h3>
+                <p>
+                  <T>
+                    <span slot="en">Flip cards, learn letters, and discover animals!</span>
+                    <span slot="ja">カードをめくって、文字を学び、動物を見つけよう！</span>
+                  </T>
+                </p>
+                <span class="play-btn">
+                  <T>
+                    <span slot="en">Play Now</span>
+                    <span slot="ja">今すぐプレイ</span>
+                  </T>
+                  <i class="fas fa-play"></i>
+                </span>
             </div>
         </a>
       </div>
@@ -55,7 +108,6 @@ import Navbar from '../components/Navbar.astro';
     width: 100%;
     height: 250px;
     background-color: var(--color-primary);
-    background-image: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
     position: relative;
     display: flex;
     justify-content: center;
