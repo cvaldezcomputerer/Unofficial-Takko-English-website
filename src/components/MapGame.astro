@@ -159,8 +159,8 @@ for (const path in roomImagesGlob) {
     image-rendering: pixelated;
   }
 
-  .grid :global(.cell.has-player) {
-    background-color: rgba(76, 175, 80, 0.2);
+  .grid :global(.cell.out-of-bounds) {
+    background-color: rgba(255, 0, 0, 0.6) !important;
   }
 
   .grid :global(.player) {
@@ -431,6 +431,10 @@ for (const path in roomImagesGlob) {
         }
 
         if (isPlayerHere) {
+          cell.classList.add("has-player");
+          if (!road && !location && !item) {
+            cell.classList.add("out-of-bounds");
+          }
           const playerEl = document.createElement("div");
           playerEl.className = "player";
           const img = document.createElement("img");
