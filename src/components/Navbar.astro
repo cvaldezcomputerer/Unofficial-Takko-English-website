@@ -1,9 +1,13 @@
 ---
+import Logo from './Logo.astro';
 ---
 <nav class="main-nav">
   <div class="nav-content">
     <div class="nav-header">
-      <a href="/" class="logo">T_T</a>
+      <a href="/" class="logo" aria-label="Takkotaco home">
+        <Logo />
+        <span class="logo-text">TakkoTaco</span>
+      </a>
       <button class="menu-toggle" id="menu-toggle" aria-label="Toggle Menu" aria-expanded="false">
         <i class="fas fa-bars"></i>
       </button>
@@ -142,10 +146,20 @@
   }
 
   .logo {
-    font-size: 1.5rem;
-    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    font-size: 2.4rem;
+    line-height: 1;
     color: var(--color-dark-green);
     text-decoration: none;
+  }
+
+  .logo-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
   }
 
   /* Default Desktop Styles */

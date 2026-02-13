@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import Logo from '../components/Logo.astro';
 
 interface Props {
 	title?: string;
@@ -34,7 +35,10 @@ const {
 		<slot />
         
         <footer>
-            <p>Made with ❤️ in Takko Machi</p>
+            <a href="/" class="footer-logo-link" aria-label="Takkotaco home">
+                <Logo class="footer-logo" />
+            </a>
+            <p>Made with love in Takko Machi</p>
         </footer>
 	</body>
 </html>
