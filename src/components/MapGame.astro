@@ -37,6 +37,7 @@ for (const path in roomImagesGlob) {
     <button class="control-btn" id="btn-right">➡️</button>
     <button class="control-btn reset-btn" id="btn-reset">🔄</button>
     <button class="control-btn" id="btn-next-map" title="Next Map">🗺️</button>
+    <button class="control-btn" id="btn-mute" title="Toggle Sound">🔊</button>
   </div>
 </div>
 
@@ -74,6 +75,7 @@ for (const path in roomImagesGlob) {
     writing-mode: vertical-rl;
     text-orientation: upright;
     letter-spacing: 2px;
+    white-space: nowrap;
   }
 
   .controls {
@@ -365,6 +367,16 @@ for (const path in roomImagesGlob) {
     return interior.entrance || null;
   }
 
+  function buildCoordIndex(arr) {
+    const map = new Map();
+    for (const it of arr || []) {
+      const k = keyFor(it.x, it.y);
+      // Keep first item so behavior matches previous Array.find() semantics.
+      if (!map.has(k)) map.set(k, it);
+    }
+    return map;
+  }
+
   // We keep authoring coordinates in `levelsRaw`, then apply a uniform shift so the school doesn't
   // sit flush to the bottom of the viewport/grid. This preserves the grid size and just moves
   // the school content (player + roads + locations + items) together.
@@ -373,6 +385,19 @@ for (const path in roomImagesGlob) {
       name: "Mizu Gashira ES",
       startPos: { x: 2, y: 11 },
       startHeading: 0,
+      interior: {
+        rects: [
+          { x1: 2, y1: 2, x2: 2, y2: 11 },
+          { x1: 2, y1: 1, x2: 17, y2: 3 },
+          { x1: 3, y1: 4, x2: 18, y2: 6 },
+          { x1: 3, y1: 7, x2: 15, y2: 9 },
+          { x1: 7, y1: 3, x2: 7, y2: 4 },
+          { x1: 12, y1: 3, x2: 12, y2: 4 },
+          { x1: 8, y1: 6, x2: 8, y2: 7 },
+          { x1: 11, y1: 6, x2: 11, y2: 7 }
+        ],
+        entrance: { x: 2, y: 11, open: ['bottom', 'left', 'right'] }
+      },
       locations: [
         { x: 2, y: 11, name: "Entrance", image: roomMap['entrance'] },
         { x: 4, y: 1, name: "Staff Room", image: roomMap['staff-room'] },
@@ -430,12 +455,48 @@ for (const path in roomImagesGlob) {
         { x: 13, y: 8, image: 'straight-horizontal' }, { x: 14, y: 8, image: 't-shape-up' },    
         { x: 15, y: 8, image: 'end-left' },
       ],
-      items: []
+      items: [
+        // Top edge (Safe)
+        { x: 2, y: 0, icon: "🌲" }, { x: 10, y: 0, icon: "🌳" }, { x: 14, y: 0, icon: "🌲" },
+        
+        // Left/Right sides (Safe)
+        { x: 1, y: 5, icon: "🌳" }, { x: 0, y: 8, icon: "🌲" },
+        { x: 19, y: 5, icon: "🌲" }, { x: 20, y: 3, icon: "🌳" },
+
+        // Bottom corners (Safe)
+        { x: 0, y: 11, icon: "🌲" }, { x: 20, y: 11, icon: "🌳" },
+        
+        // Near Playground/Gym (Outdoor spaces)
+        { x: 17, y: 8, icon: "⚽" }, 
+        
+        // Near Entrance (Outdoor)
+        { x: 3, y: 11, icon: "🌻" }
+      ]
     },
     {
       name: "Kamogo ES 🦆",
       startPos: { x: 2, y: 11 },
       startHeading: 0,
+      interior: {
+        rects: [
+          { x1: 2, y1: 1, x2: 18, y2: 9 },
+          { x1: 2, y1: 10, x2: 2, y2: 11 },
+          { x1: 12, y1: 10, x2: 12, y2: 11 },
+          { x1: 18, y1: 10, x2: 18, y2: 11 }
+        ],
+        holes: [
+          { x1: 3, y1: 4, x2: 3, y2: 4 },
+          { x1: 7, y1: 4, x2: 7, y2: 5 },
+          { x1: 9, y1: 4, x2: 9, y2: 5 },
+          { x1: 11, y1: 4, x2: 11, y2: 5 },
+          { x1: 13, y1: 4, x2: 13, y2: 5 },
+          { x1: 15, y1: 4, x2: 16, y2: 5 },
+          { x1: 3, y1: 8, x2: 5, y2: 8 },
+          { x1: 7, y1: 8, x2: 9, y2: 8 },
+          { x1: 15, y1: 8, x2: 17, y2: 8 }
+        ],
+        entrance: { x: 2, y: 11, open: ['bottom', 'left', 'right'] }
+      },
       locations: [
          { x: 2, y: 11, name: "Entrance", image: roomMap['entrance'] },
          { x: 2, y: 1, name: "Staff Room", image: roomMap['staff-room'] },
@@ -535,7 +596,13 @@ for (const path in roomImagesGlob) {
       ],
       items: [
         { x: 8, y: 5, icon: "💰" },
-        { x: 16, y: 7, icon: "🐕" }
+        { x: 16, y: 7, icon: "🐕" },
+        { x: 3, y: 4, icon: "🌲" }, { x: 7, y: 4, icon: "🌳" }, { x: 9, y: 4, icon: "🌲" },
+        { x: 11, y: 4, icon: "🌳" }, { x: 13, y: 4, icon: "🌲" }, { x: 15, y: 4, icon: "🌳" },
+        { x: 3, y: 8, icon: "🌲" }, { x: 7, y: 8, icon: "🌳" }, { x: 9, y: 8, icon: "🌲" },
+        { x: 15, y: 8, icon: "🌳" },
+        { x: 0, y: 2, icon: "🌲" }, { x: 20, y: 3, icon: "🌳" },
+        { x: 0, y: 9, icon: "🌳" }, { x: 20, y: 8, icon: "🌲" }
       ]
     },
     {
@@ -703,18 +770,117 @@ for (const path in roomImagesGlob) {
     // Cache derived masks so renderGrid stays cheap.
     lvl.__interiorSet = buildInteriorSet(lvl);
     lvl.__entrance = getEntranceConfig(lvl);
+    lvl.__locationByKey = buildCoordIndex(lvl.locations);
+    lvl.__roadByKey = buildCoordIndex(lvl.roads);
+    lvl.__itemByKey = buildCoordIndex(lvl.items);
     warnDuplicateCoords(lvl);
   }
+
+  const GRID_WIDTH = 21;
+  const GRID_HEIGHT = 12;
+  const GRID_CELL_COUNT = GRID_WIDTH * GRID_HEIGHT;
+  const DEBUG_TILE_LOG = false;
 
   let currentLevelIdx = 0;
   let playerPos = { ...levels[0].startPos };
   let playerHeading = levels[0].startHeading || 0; 
   const directions = [{ dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }];
   const headingToRotation = [0, 90, 180, 270];
+  const MUTE_STORAGE_KEY = 'map-game-muted';
+  let staticGridLevelIdx = -1;
+  let cellEls = [];
+  let gridEl = null;
+  let mapTitleEl = null;
+  let playerEl = null;
+  let playerImgEl = null;
 
-  function getLocationAt(x, y) { return levels[currentLevelIdx].locations.find(loc => loc.x === x && loc.y === y); }
-  function getRoadAt(x, y) { return levels[currentLevelIdx].roads.find(r => r.x === x && r.y === y); }
-  function getItemAt(x, y) { return (levels[currentLevelIdx].items || []).find(i => i.x === x && i.y === y); }
+  let isMuted = true;
+  const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
+  const meowAudio = new Audio('/audio/meowDeep.mp3');
+  meowAudio.preload = 'auto';
+
+  function loadMutePreference() {
+    try {
+      const stored = localStorage.getItem(MUTE_STORAGE_KEY);
+      isMuted = stored === null ? true : stored === '1';
+    } catch {
+      isMuted = true;
+    }
+  }
+
+  function saveMutePreference() {
+    try {
+      localStorage.setItem(MUTE_STORAGE_KEY, isMuted ? '1' : '0');
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  function updateMuteButtonUI() {
+    const muteBtn = document.getElementById('btn-mute');
+    if (!muteBtn) return;
+    muteBtn.textContent = isMuted ? '🔇' : '🔊';
+    muteBtn.setAttribute('aria-pressed', isMuted ? 'true' : 'false');
+    muteBtn.setAttribute('title', isMuted ? 'Unmute Sound' : 'Mute Sound');
+  }
+
+  function setMuted(nextMuted) {
+    isMuted = !!nextMuted;
+    if (isMuted) {
+      meowAudio.pause();
+      meowAudio.currentTime = 0;
+      if (canSpeak) window.speechSynthesis.cancel();
+    }
+    updateMuteButtonUI();
+    saveMutePreference();
+  }
+
+  function toggleMute() {
+    setMuted(!isMuted);
+  }
+
+  function speakPlaceName(name) {
+    if (isMuted || !canSpeak || !name) return;
+    const text = String(name).trim();
+    if (!text) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleTileAudio(x, y) {
+    const location = getLocationAt(x, y);
+    if (!location?.name) return;
+    speakPlaceName(location.name);
+  }
+
+  function getLocationAt(x, y) {
+    return levels[currentLevelIdx].__locationByKey.get(keyFor(x, y));
+  }
+
+  function getRoadAt(x, y) {
+    return levels[currentLevelIdx].__roadByKey.get(keyFor(x, y));
+  }
+
+  function getItemAt(x, y) {
+    return levels[currentLevelIdx].__itemByKey.get(keyFor(x, y));
+  }
+
+  function hasTileContent(x, y) {
+    return !!(getRoadAt(x, y) || getLocationAt(x, y) || getItemAt(x, y));
+  }
+
+  function tileIndex(x, y) {
+    return (y * GRID_WIDTH) + x;
+  }
+
+  function getCellAt(x, y) {
+    return cellEls[tileIndex(x, y)] || null;
+  }
 
   function warnDuplicateCoords(level) {
     const bucketByKey = (arr) => {
@@ -734,7 +900,7 @@ for (const path in roomImagesGlob) {
     for (const [k, v] of bucketByKey(level.items)) if (v.length > 1) dupes.push({ type: 'items', key: k, entries: v });
 
     if (dupes.length) {
-      console.warn(`[${level.name}] duplicate coords detected (renderer uses .find(), so first match wins):`, dupes);
+      console.warn(`[${level.name}] duplicate coords detected (index keeps first match):`, dupes);
     }
   }
 
@@ -753,45 +919,52 @@ for (const path in roomImagesGlob) {
     });
   }
 
-  function renderGrid() {
-    const grid = document.getElementById("grid");
-    const mapTitle = document.getElementById("map-title");
-    if (mapTitle) mapTitle.textContent = levels[currentLevelIdx].name;
-    if (!grid) return;
-    grid.innerHTML = "";
+  function ensurePlayerElement() {
+    if (playerEl && playerImgEl) return;
+    playerEl = document.createElement("div");
+    playerEl.className = "player";
+    playerImgEl = document.createElement("img");
+    playerImgEl.src = playerImageSrc;
+    playerImgEl.className = "player-image";
+    playerEl.appendChild(playerImgEl);
+  }
+
+  function renderStaticGrid() {
+    if (!gridEl) return;
 
     const level = levels[currentLevelIdx];
     const interiorSet = level.__interiorSet || buildInteriorSet(level);
     const entrance = level.__entrance || getEntranceConfig(level);
+    const entranceOpenSides = entrance ? new Set(entrance.open || []) : null;
+    const fragment = document.createDocumentFragment();
+    cellEls = new Array(GRID_CELL_COUNT);
 
-    for (let y = 0; y < 12; y++) {
-      for (let x = 0; x < 21; x++) {
+    for (let y = 0; y < GRID_HEIGHT; y++) {
+      for (let x = 0; x < GRID_WIDTH; x++) {
         const cell = document.createElement("div");
         cell.className = "cell";
         const location = getLocationAt(x, y);
         const road = getRoadAt(x, y);
         const item = getItemAt(x, y);
-        const isPlayerHere = playerPos.x === x && playerPos.y === y;
-
-        const inside = interiorSet.has(keyFor(x, y));
+        const tileKey = keyFor(x, y);
+        const inside = interiorSet.has(tileKey);
 
         // Interior floor (beige)
         if (inside) cell.classList.add("interior");
 
         // Walls derived from interior mask
         if (inside) {
-          const openSides =
-            entrance && entrance.x === x && entrance.y === y ? new Set(entrance.open || []) : null;
+          const isEntranceCell = entrance && entrance.x === x && entrance.y === y;
 
           const upOutside = y === 0 || !interiorSet.has(keyFor(x, y - 1));
-          const downOutside = y === 11 || !interiorSet.has(keyFor(x, y + 1));
+          const downOutside = y === GRID_HEIGHT - 1 || !interiorSet.has(keyFor(x, y + 1));
           const leftOutside = x === 0 || !interiorSet.has(keyFor(x - 1, y));
-          const rightOutside = x === 20 || !interiorSet.has(keyFor(x + 1, y));
+          const rightOutside = x === GRID_WIDTH - 1 || !interiorSet.has(keyFor(x + 1, y));
 
-          if (upOutside && !(openSides && openSides.has('top'))) cell.classList.add("wall-top");
-          if (downOutside && !(openSides && openSides.has('bottom'))) cell.classList.add("wall-bottom");
-          if (leftOutside && !(openSides && openSides.has('left'))) cell.classList.add("wall-left");
-          if (rightOutside && !(openSides && openSides.has('right'))) cell.classList.add("wall-right");
+          if (upOutside && !(isEntranceCell && entranceOpenSides && entranceOpenSides.has('top'))) cell.classList.add("wall-top");
+          if (downOutside && !(isEntranceCell && entranceOpenSides && entranceOpenSides.has('bottom'))) cell.classList.add("wall-bottom");
+          if (leftOutside && !(isEntranceCell && entranceOpenSides && entranceOpenSides.has('left'))) cell.classList.add("wall-left");
+          if (rightOutside && !(isEntranceCell && entranceOpenSides && entranceOpenSides.has('right'))) cell.classList.add("wall-right");
         }
 
         if (road) {
@@ -824,26 +997,52 @@ for (const path in roomImagesGlob) {
           cell.appendChild(itemEl);
         }
 
-        if (isPlayerHere) {
-          cell.classList.add("has-player");
-          if (!road && !location && !item) {
-            cell.classList.add("out-of-bounds");
-          }
-          const playerEl = document.createElement("div");
-          playerEl.className = "player";
-          const img = document.createElement("img");
-          img.src = playerImageSrc;
-          img.className = "player-image";
-          img.style.transform = `rotate(${headingToRotation[playerHeading]}deg)`;
-          playerEl.appendChild(img);
-          cell.appendChild(playerEl);
-        }
-        grid.appendChild(cell);
+        const index = tileIndex(x, y);
+        cellEls[index] = cell;
+        fragment.appendChild(cell);
       }
     }
 
-    // Helpful for map editing: prints the current tile after every re-render.
-    logCurrentTile(interiorSet);
+    gridEl.replaceChildren(fragment);
+    staticGridLevelIdx = currentLevelIdx;
+  }
+
+  function renderPlayer() {
+    ensurePlayerElement();
+    const nextCell = getCellAt(playerPos.x, playerPos.y);
+    if (!nextCell || !playerEl || !playerImgEl) return;
+
+    const prevCell = playerEl.parentElement;
+    if (prevCell) {
+      prevCell.classList.remove("has-player", "out-of-bounds");
+      prevCell.removeChild(playerEl);
+    }
+
+    nextCell.classList.add("has-player");
+    if (!hasTileContent(playerPos.x, playerPos.y)) {
+      nextCell.classList.add("out-of-bounds");
+    }
+    playerImgEl.style.transform = `rotate(${headingToRotation[playerHeading]}deg)`;
+    nextCell.appendChild(playerEl);
+  }
+
+  function renderGrid() {
+    if (!gridEl) gridEl = document.getElementById("grid");
+    if (!mapTitleEl) mapTitleEl = document.getElementById("map-title");
+    if (mapTitleEl) mapTitleEl.textContent = levels[currentLevelIdx].name;
+    if (!gridEl) return;
+
+    if (staticGridLevelIdx !== currentLevelIdx || cellEls.length !== GRID_CELL_COUNT) {
+      renderStaticGrid();
+    }
+
+    renderPlayer();
+
+    if (DEBUG_TILE_LOG) {
+      const level = levels[currentLevelIdx];
+      const interiorSet = level.__interiorSet || buildInteriorSet(level);
+      logCurrentTile(interiorSet);
+    }
   }
 
   function turnLeft() { playerHeading = (playerHeading + 3) % 4; renderGrid(); }
@@ -851,30 +1050,30 @@ for (const path in roomImagesGlob) {
   function goStraight() {
     const dir = directions[playerHeading];
     const newX = playerPos.x + dir.dx, newY = playerPos.y + dir.dy;
-    if (newX >= 0 && newX <= 20 && newY >= 0 && newY <= 11) {
+    if (newX >= 0 && newX <= GRID_WIDTH - 1 && newY >= 0 && newY <= GRID_HEIGHT - 1) {
       playerPos = { x: newX, y: newY };
       renderGrid();
-      // Status updated in renderGrid
-      if (!getRoadAt(newX, newY) && !getLocationAt(newX, newY) && !getItemAt(newX, newY)) triggerExplosion(newX, newY);
+      handleTileAudio(newX, newY);
+      if (!hasTileContent(newX, newY)) triggerExplosion(newX, newY);
     }
   }
 
-  window.triggerExplosion = function(x, y) {
+  function triggerExplosion(x, y) {
     // Play out-of-bounds sound
-    const meow = new Audio('/audio/meowDeep.mp3');
-    meow.play().catch(e => console.warn("Audio play blocked by browser:", e));
+    if (!isMuted) {
+      meowAudio.currentTime = 0;
+      meowAudio.play().catch(e => console.warn("Audio play blocked by browser:", e));
+    }
 
-    const grid = document.getElementById("grid");
-    const index = y * 21 + x;
-    const cell = grid?.children[index];
+    const cell = getCellAt(x, y);
     if (cell) {
       const img = document.createElement("img");
-      img.src = explosionSrc + "?t=" + Date.now(); 
+      img.src = explosionSrc;
       img.className = "explosion-effect";
       cell.appendChild(img);
       setTimeout(() => img.remove(), 1000);
     }
-  };
+  }
 
   function resetGame() {
     playerPos = { ...levels[currentLevelIdx].startPos }; 
@@ -888,12 +1087,16 @@ for (const path in roomImagesGlob) {
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    loadMutePreference();
+    updateMuteButtonUI();
+
     renderGrid();
     document.getElementById("btn-left")?.addEventListener("click", turnLeft);
     document.getElementById("btn-right")?.addEventListener("click", turnRight);
     document.getElementById("btn-straight")?.addEventListener("click", goStraight);
     document.getElementById("btn-reset")?.addEventListener("click", resetGame);
     document.getElementById("btn-next-map")?.addEventListener("click", switchMap);
+    document.getElementById("btn-mute")?.addEventListener("click", toggleMute);
     
     // Keyboard controls
     document.addEventListener("keydown", (e) => {
