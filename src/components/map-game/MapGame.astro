@@ -23,7 +23,7 @@ for (const path in roomImagesGlob) {
 }
 ---
 
-<div class="game-container">
+<div class="game-container" id="game-container">
   <div id="map-title" class="map-title"></div>
   <div class="grid-container">
     <div class="grid" id="grid">
@@ -31,10 +31,14 @@ for (const path in roomImagesGlob) {
     </div>
   </div>
   
-  <div class="controls">
+  <div class="controls-panel movement-controls">
     <button class="control-btn" id="btn-left">⬅️</button>
     <button class="control-btn" id="btn-straight">⬆️</button>
     <button class="control-btn" id="btn-right">➡️</button>
+  </div>
+
+  <div class="controls-panel utility-controls">
+    <button class="control-btn blackout-toggle-btn" id="btn-blackout" title="Hide Board">👁️</button>
     <button class="control-btn reset-btn" id="btn-reset">🔄</button>
     <button class="control-btn" id="btn-next-map" title="Next Map">🗺️</button>
     <button class="control-btn" id="btn-mute" title="Toggle Sound">🔊</button>
@@ -78,22 +82,37 @@ for (const path in roomImagesGlob) {
     white-space: nowrap;
   }
 
-  .controls {
+  .controls-panel {
     position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding: 20px 10px;
     border-radius: 20px;
     justify-content: center;
+    align-items: center;
     flex-shrink: 0;
     z-index: 1000;
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(4px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+  }
+
+  .movement-controls {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    flex-direction: row;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .utility-controls {
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px 10px;
   }
 
   .control-btn {
@@ -117,6 +136,53 @@ for (const path in roomImagesGlob) {
 
   .control-btn:active {
     transform: scale(0.9);
+  }
+
+  .blackout-toggle-btn {
+    background: #111;
+    color: #fff;
+  }
+
+  .game-container.blackout-active .grid {
+    visibility: hidden;
+  }
+
+  .game-container.blackout-active .grid-container {
+    background: #000;
+  }
+
+  .game-container.blackout-active .map-title {
+    opacity: 0.15;
+  }
+
+  .game-container.blackout-active .movement-controls {
+    left: 50%;
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    flex-direction: row;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+    gap: 14px;
+    padding: 16px 18px;
+  }
+
+  .game-container.blackout-active .utility-controls {
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+  }
+
+  .game-container.blackout-active .movement-controls .control-btn {
+    font-size: 2.2rem;
+    padding: 12px 24px;
+  }
+
+  .game-container.blackout-active .blackout-toggle-btn {
+    order: 0;
+    font-size: 2.5rem;
+    background: #e53935;
+    color: #fff;
+    border: 2px solid #fff;
   }
 
   .grid-container {
@@ -400,6 +466,68 @@ for (const path in roomImagesGlob) {
     return map;
   }
 
+  function pickRoadImageFromNeighbors(up, right, down, left) {
+    const count = (up ? 1 : 0) + (right ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0);
+
+    if (count === 4) return 'cross';
+
+    if (count === 3) {
+      if (!up) return 't-shape-down';
+      if (!right) return 't-shape-left';
+      if (!down) return 't-shape-up';
+      return 't-shape-right';
+    }
+
+    if (count === 2) {
+      if (up && down) return 'straight-vertical';
+      if (left && right) return 'straight-horizontal';
+      if (up && right) return 'corner-top-right';
+      if (right && down) return 'corner-bot-right';
+      if (down && left) return 'corner-bot-left';
+      return 'corner-top-left';
+    }
+
+    if (count === 1) {
+      if (up) return 'end-up';
+      if (right) return 'end-right';
+      if (down) return 'end-down';
+      return 'end-left';
+    }
+
+    return 'end-up';
+  }
+
+  function fillInteriorRoads(level) {
+    const interiorSet = buildInteriorSet(level);
+    const locationByKey = buildCoordIndex(level.locations);
+    const roadByKey = buildCoordIndex(level.roads);
+
+    // Fill every interior tile that isn't a location.
+    for (const k of interiorSet) {
+      if (locationByKey.has(k) || roadByKey.has(k)) continue;
+      const [xStr, yStr] = k.split(',');
+      roadByKey.set(k, { x: Number(xStr), y: Number(yStr), image: 'straight-horizontal' });
+    }
+
+    const hasConnection = (x, y) => {
+      const k = keyFor(x, y);
+      return roadByKey.has(k) || locationByKey.has(k);
+    };
+    for (const [k, road] of roadByKey.entries()) {
+      const [xStr, yStr] = k.split(',');
+      const x = Number(xStr);
+      const y = Number(yStr);
+      road.image = pickRoadImageFromNeighbors(
+        hasConnection(x, y - 1),
+        hasConnection(x + 1, y),
+        hasConnection(x, y + 1),
+        hasConnection(x - 1, y)
+      );
+    }
+
+    level.roads = [...roadByKey.values()];
+  }
+
   // We keep authoring coordinates in `levelsRaw`, then apply a uniform shift so the school doesn't
   // sit flush to the bottom of the viewport/grid. This preserves the grid size and just moves
   // the school content (player + roads + locations + items) together.
@@ -437,6 +565,11 @@ for (const path in roomImagesGlob) {
         { x: 12, y: 9, name: "Home Ec Room", image: roomMap['home-ec-room'] },
         { x: 14, y: 7, name: "Playground", image: roomMap['playground'] },
         { x: 6, y: 1, name: "Class Room", image: roomMap['class-room'] },
+        { x: 7, y: 6, name: "Classroom 2", image: roomMap['class-room'] },
+        { x: 13, y: 6, name: "Classroom 3", image: roomMap['class-room'] },
+        { x: 8, y: 9, name: "Classroom 4", image: roomMap['class-room'] },
+        { x: 10, y: 9, name: "Classroom 5", image: roomMap['class-room'] },
+        { x: 14, y: 9, name: "Classroom 6", image: roomMap['class-room'] },
         { x: 4, y: 3, name: "Principals Office", image: roomMap['principals-office'] },
       ],
       roads: [
@@ -448,7 +581,7 @@ for (const path in roomImagesGlob) {
         { x: 3, y: 2, image: 'straight-horizontal' }, { x: 4, y: 2, image: 'cross' },    
         { x: 5, y: 2, image: 'straight-horizontal' }, { x: 6, y: 2, image: 't-shape-up' },
         { x: 7, y: 2, image: 't-shape-down' }, { x: 8, y: 2, image: 't-shape-down' }, 
-        { x: 9, y: 2, image: 'straight-horizontal' }, { x: 10, y: 2, image: 'straight-horizontal' },
+        { x: 9, y: 2, image: 'straight-horizontal' }, { x: 10, y: 2, image: 't-shape-up' },
         { x: 11, y: 2, image: 'straight-horizontal' }, { x: 12, y: 2, image: 't-shape-down' },    
         { x: 13, y: 2, image: 'straight-horizontal' }, { x: 14, y: 2, image: 'straight-horizontal' },
         { x: 15, y: 2, image: 'straight-horizontal' }, { x: 16, y: 2, image: 't-shape-down' }, 
@@ -459,10 +592,10 @@ for (const path in roomImagesGlob) {
 
         { x: 3, y: 5, image: 'straight-horizontal' }, { x: 4, y: 5, image: 'straight-horizontal' },
         { x: 5, y: 5, image: 't-shape-down' }, { x: 6, y: 5, image: 'straight-horizontal' },
-        { x: 7, y: 5, image: 't-shape-up' }, { x: 8, y: 5, image: 't-shape-down' },
+        { x: 7, y: 5, image: 'cross' }, { x: 8, y: 5, image: 't-shape-down' },
         { x: 9, y: 5, image: 'straight-horizontal' }, { x: 10, y: 5, image: 't-shape-down' }, 
         { x: 11, y: 5, image: 't-shape-down' }, { x: 12, y: 5, image: 't-shape-up' },
-        { x: 13, y: 5, image: 'straight-horizontal' }, { x: 14, y: 5, image: 'straight-horizontal' },
+        { x: 13, y: 5, image: 't-shape-down' }, { x: 14, y: 5, image: 'straight-horizontal' },
         { x: 15, y: 5, image: 'cross' }, { x: 16, y: 5, image: 'straight-horizontal' },
         { x: 17, y: 5, image: 'straight-horizontal' },
 
@@ -472,10 +605,10 @@ for (const path in roomImagesGlob) {
 
         { x: 3, y: 8, image: 'straight-horizontal' }, { x: 4, y: 8, image: 't-shape-down' }, 
         { x: 5, y: 8, image: 'straight-horizontal' }, { x: 6, y: 8, image: 't-shape-up' },    
-        { x: 7, y: 8, image: 'straight-horizontal' }, { x: 8, y: 8, image: 't-shape-up' },
-        { x: 9, y: 8, image: 'straight-horizontal' }, { x: 10, y: 8, image: 'straight-horizontal' },
+        { x: 7, y: 8, image: 'straight-horizontal' }, { x: 8, y: 8, image: 'cross' },
+        { x: 9, y: 8, image: 'straight-horizontal' }, { x: 10, y: 8, image: 't-shape-down' },
         { x: 11, y: 8, image: 't-shape-up' }, { x: 12, y: 8, image: 't-shape-down' }, 
-        { x: 13, y: 8, image: 'straight-horizontal' }, { x: 14, y: 8, image: 't-shape-up' },    
+        { x: 13, y: 8, image: 'straight-horizontal' }, { x: 14, y: 8, image: 'cross' },    
         { x: 15, y: 8, image: 'end-left' },
       ],
       items: [
@@ -790,6 +923,12 @@ for (const path in roomImagesGlob) {
   const levels = levelsRawOrdered.map((lvl) => shiftLevelY(lvl, SCHOOL_SHIFT_Y));
 
   for (const lvl of levels) {
+    if ((lvl.name || '').includes('Kamogo ES')) {
+      fillInteriorRoads(lvl);
+    }
+  }
+
+  for (const lvl of levels) {
     // Cache derived masks so renderGrid stays cheap.
     lvl.__interiorSet = buildInteriorSet(lvl);
     lvl.__entrance = getEntranceConfig(lvl);
@@ -814,10 +953,12 @@ for (const path in roomImagesGlob) {
   let staticGridLevelIdx = -1;
   let cellEls = [];
   let gridEl = null;
+  let gameContainerEl = null;
   let mapTitleEl = null;
   let playerEl = null;
   let playerImgEl = null;
   let showFirstVisitHighlight = false;
+  let isBlackout = false;
 
   let isMuted = true;
   const meowAudio = new Audio('/audio/map-game/meowDeep.mp3');
@@ -871,6 +1012,25 @@ for (const path in roomImagesGlob) {
     muteBtn.textContent = isMuted ? '🔇' : '🔊';
     muteBtn.setAttribute('aria-pressed', isMuted ? 'true' : 'false');
     muteBtn.setAttribute('title', isMuted ? 'Unmute Sound' : 'Mute Sound');
+  }
+
+  function updateBlackoutUI() {
+    const blackoutBtn = document.getElementById('btn-blackout');
+    if (!blackoutBtn) return;
+
+    blackoutBtn.textContent = isBlackout ? '🙈' : '👁️';
+    blackoutBtn.setAttribute('aria-pressed', isBlackout ? 'true' : 'false');
+    blackoutBtn.setAttribute('title', isBlackout ? 'Show Board' : 'Hide Board');
+    blackoutBtn.setAttribute('aria-label', isBlackout ? 'Show board' : 'Hide board');
+
+    if (gameContainerEl) {
+      gameContainerEl.classList.toggle('blackout-active', isBlackout);
+    }
+  }
+
+  function toggleBlackout() {
+    isBlackout = !isBlackout;
+    updateBlackoutUI();
   }
 
   function setMuted(nextMuted) {
@@ -1159,6 +1319,8 @@ for (const path in roomImagesGlob) {
     loadMutePreference();
     initFirstVisitHighlight();
     updateMuteButtonUI();
+    gameContainerEl = document.getElementById("game-container");
+    updateBlackoutUI();
 
     renderGrid();
     document.getElementById("btn-left")?.addEventListener("click", turnLeft);
@@ -1167,6 +1329,7 @@ for (const path in roomImagesGlob) {
     document.getElementById("btn-reset")?.addEventListener("click", resetGame);
     document.getElementById("btn-next-map")?.addEventListener("click", switchMap);
     document.getElementById("btn-mute")?.addEventListener("click", toggleMute);
+    document.getElementById("btn-blackout")?.addEventListener("click", toggleBlackout);
     
     // Keyboard controls
     document.addEventListener("keydown", (e) => {
