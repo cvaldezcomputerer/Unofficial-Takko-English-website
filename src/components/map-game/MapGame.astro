@@ -87,6 +87,31 @@ for (const path in roomImagesGlob) {
       </svg>
     </button>
   </div>
+
+  <button class="avatar-tool-btn" id="btn-avatar-draw" type="button" title="アバターをかく" aria-label="アバターをかく">
+    <svg class="avatar-tool-btn__icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <rect x="10" y="10" width="44" height="44" rx="10" fill="#ffffff" stroke="#0f172a" stroke-width="4"></rect>
+      <path d="M20 42 42 20l6 6-22 22H20z" fill="#f59e0b" stroke="#92400e" stroke-width="3" stroke-linejoin="round"></path>
+      <path d="M40 18l6 6" stroke="#0f172a" stroke-width="3" stroke-linecap="round"></path>
+    </svg>
+    <span>アバター</span>
+  </button>
+
+  <div class="avatar-modal hidden" id="avatar-modal" role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title">
+    <div class="avatar-modal__card">
+      <h2 id="avatar-modal-title">アバターをかこう</h2>
+      <p>かおをかいて、プレイヤーにしよう。</p>
+      <div class="avatar-modal__canvas-wrap">
+        <canvas id="avatar-canvas" width="256" height="256" aria-label="アバターおえかき"></canvas>
+      </div>
+      <div class="avatar-modal__actions">
+        <button id="btn-avatar-clear" type="button">けす</button>
+        <button id="btn-avatar-use-default" type="button">ねこにもどす</button>
+        <button id="btn-avatar-modal-close" type="button">とじる</button>
+        <button id="btn-avatar-apply" type="button">このえをつかう</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -430,6 +455,19 @@ for (const path in roomImagesGlob) {
     left: 0;
   }
 
+  .grid :global(.player.custom-avatar)::before {
+    content: "";
+    position: absolute;
+    width: 86%;
+    height: 86%;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 2px solid rgba(15, 23, 42, 0.24);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+    z-index: 0;
+    pointer-events: none;
+  }
+
   .grid :global(.player.first-visit-highlight)::after {
     content: "";
     position: absolute;
@@ -458,6 +496,8 @@ for (const path in roomImagesGlob) {
     height: 80%;
     object-fit: contain;
     transition: transform 0.2s ease;
+    position: relative;
+    z-index: 1;
   }
 
   .grid :global(.location-label) {
@@ -489,6 +529,128 @@ for (const path in roomImagesGlob) {
     z-index: 200;
     pointer-events: none;
     object-fit: fill;
+  }
+
+  .avatar-tool-btn {
+    position: absolute;
+    left: 10px;
+    bottom: 14px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    height: 64px;
+    padding: 0 0.75rem 0 0.5rem;
+    border-radius: 14px;
+    border: 3px solid #0f172a;
+    background: #fff2cc;
+    color: #0f172a;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 800;
+  }
+
+  .avatar-tool-btn__icon {
+    width: 38px;
+    height: 38px;
+    display: block;
+  }
+
+  .avatar-tool-btn:focus-visible {
+    outline: 4px solid #fde047;
+    outline-offset: 2px;
+  }
+
+  .avatar-tool-btn:active {
+    transform: scale(0.96);
+  }
+
+  .avatar-modal {
+    position: absolute;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(2, 6, 23, 0.58);
+  }
+
+  .avatar-modal.hidden {
+    display: none;
+  }
+
+  .avatar-modal__card {
+    width: min(430px, 96vw);
+    border-radius: 16px;
+    border: 3px solid #1e3a8a;
+    background: #f8fbff;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+    padding: 0.9rem;
+    color: #0f172a;
+  }
+
+  .avatar-modal__card h2 {
+    margin: 0;
+    font-size: 1.3rem;
+  }
+
+  .avatar-modal__card p {
+    margin: 0.35rem 0 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  .avatar-modal__canvas-wrap {
+    border-radius: 12px;
+    border: 3px solid #1e3a8a;
+    background: #ffffff;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+  }
+
+  #avatar-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  .avatar-modal__actions {
+    margin-top: 0.7rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .avatar-modal__actions button {
+    min-height: 44px;
+    border-radius: 10px;
+    border: 2px solid #1e3a8a;
+    background: #dbeafe;
+    color: #1e3a8a;
+    font-family: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  #btn-avatar-apply {
+    border-color: #065f46;
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  #btn-avatar-use-default {
+    border-color: #7c2d12;
+    background: #ffedd5;
+    color: #7c2d12;
+  }
+
+  .avatar-modal__actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 </style>
 
@@ -1094,6 +1256,7 @@ for (const path in roomImagesGlob) {
   const GRID_HEIGHT = 12;
   const GRID_CELL_COUNT = GRID_WIDTH * GRID_HEIGHT;
   const DEBUG_TILE_LOG = false;
+  const AVATAR_LINE_COLOR = "#1e3a8a";
 
   let currentLevelIdx = 0;
   let playerPos = { ...levels[0].startPos };
@@ -1109,8 +1272,15 @@ for (const path in roomImagesGlob) {
   let mapTitleEl = null;
   let playerEl = null;
   let playerImgEl = null;
+  let currentPlayerImageSrc = playerImageSrc;
   let showFirstVisitHighlight = false;
   let isBlackout = false;
+  let avatarModalEl = null;
+  let avatarCanvasEl = null;
+  let avatarCanvasCtx = null;
+  let avatarApplyBtnEl = null;
+  let isAvatarDrawing = false;
+  let avatarHasInk = false;
 
   let isMuted = true;
   const meowAudio = new Audio('/audio/map-game/meowDeep.mp3');
@@ -1179,6 +1349,115 @@ for (const path in roomImagesGlob) {
     if (gameContainerEl) {
       gameContainerEl.classList.toggle('blackout-active', isBlackout);
     }
+  }
+
+  function getAvatarCanvasPoint(event) {
+    if (!avatarCanvasEl) return { x: 0, y: 0 };
+    const rect = avatarCanvasEl.getBoundingClientRect();
+    const scaleX = avatarCanvasEl.width / rect.width;
+    const scaleY = avatarCanvasEl.height / rect.height;
+    return {
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY,
+    };
+  }
+
+  function updateAvatarApplyButtonState() {
+    if (avatarApplyBtnEl) avatarApplyBtnEl.disabled = !avatarHasInk;
+  }
+
+  function clearAvatarCanvas() {
+    if (!avatarCanvasCtx || !avatarCanvasEl) return;
+    avatarCanvasCtx.clearRect(0, 0, avatarCanvasEl.width, avatarCanvasEl.height);
+    avatarHasInk = false;
+    updateAvatarApplyButtonState();
+  }
+
+  function setPlayerAvatarImage(src) {
+    currentPlayerImageSrc = src || playerImageSrc;
+    if (playerImgEl) playerImgEl.src = currentPlayerImageSrc;
+    renderGrid();
+  }
+
+  function openAvatarModal() {
+    if (!avatarModalEl) return;
+    avatarModalEl.classList.remove("hidden");
+  }
+
+  function closeAvatarModal() {
+    if (!avatarModalEl) return;
+    avatarModalEl.classList.add("hidden");
+  }
+
+  function setupAvatarDrawing() {
+    avatarModalEl = document.getElementById("avatar-modal");
+    avatarCanvasEl = document.getElementById("avatar-canvas");
+    avatarApplyBtnEl = document.getElementById("btn-avatar-apply");
+    const avatarOpenBtn = document.getElementById("btn-avatar-draw");
+    const avatarCloseBtn = document.getElementById("btn-avatar-modal-close");
+    const avatarClearBtn = document.getElementById("btn-avatar-clear");
+    const avatarUseDefaultBtn = document.getElementById("btn-avatar-use-default");
+
+    if (!(avatarCanvasEl instanceof HTMLCanvasElement)) return;
+    avatarCanvasCtx = avatarCanvasEl.getContext("2d");
+    if (!avatarCanvasCtx) return;
+
+    avatarCanvasCtx.lineCap = "round";
+    avatarCanvasCtx.lineJoin = "round";
+    avatarCanvasCtx.strokeStyle = AVATAR_LINE_COLOR;
+    avatarCanvasCtx.lineWidth = 10;
+    clearAvatarCanvas();
+
+    avatarOpenBtn?.addEventListener("click", openAvatarModal);
+    avatarCloseBtn?.addEventListener("click", closeAvatarModal);
+    avatarClearBtn?.addEventListener("click", clearAvatarCanvas);
+    avatarUseDefaultBtn?.addEventListener("click", () => {
+      setPlayerAvatarImage(playerImageSrc);
+      closeAvatarModal();
+    });
+
+    avatarApplyBtnEl?.addEventListener("click", () => {
+      if (!avatarCanvasEl || !avatarHasInk) return;
+      setPlayerAvatarImage(avatarCanvasEl.toDataURL("image/png"));
+      closeAvatarModal();
+    });
+
+    avatarCanvasEl.addEventListener("pointerdown", (event) => {
+      if (!avatarCanvasCtx || !avatarCanvasEl) return;
+      event.preventDefault();
+      avatarCanvasEl.setPointerCapture(event.pointerId);
+      const { x, y } = getAvatarCanvasPoint(event);
+      avatarCanvasCtx.beginPath();
+      avatarCanvasCtx.moveTo(x, y);
+      isAvatarDrawing = true;
+      avatarHasInk = true;
+      updateAvatarApplyButtonState();
+    });
+
+    avatarCanvasEl.addEventListener("pointermove", (event) => {
+      if (!avatarCanvasCtx || !isAvatarDrawing) return;
+      const { x, y } = getAvatarCanvasPoint(event);
+      avatarCanvasCtx.lineTo(x, y);
+      avatarCanvasCtx.stroke();
+    });
+
+    const endAvatarStroke = (event) => {
+      if (!avatarCanvasEl) return;
+      if (event && avatarCanvasEl.hasPointerCapture(event.pointerId)) {
+        avatarCanvasEl.releasePointerCapture(event.pointerId);
+      }
+      isAvatarDrawing = false;
+    };
+
+    avatarCanvasEl.addEventListener("pointerup", endAvatarStroke);
+    avatarCanvasEl.addEventListener("pointercancel", endAvatarStroke);
+    avatarCanvasEl.addEventListener("pointerleave", endAvatarStroke);
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && avatarModalEl && !avatarModalEl.classList.contains("hidden")) {
+        closeAvatarModal();
+      }
+    });
   }
 
   function toggleBlackout() {
@@ -1301,7 +1580,7 @@ for (const path in roomImagesGlob) {
     playerEl = document.createElement("div");
     playerEl.className = "player";
     playerImgEl = document.createElement("img");
-    playerImgEl.src = playerImageSrc;
+    playerImgEl.src = currentPlayerImageSrc;
     playerImgEl.className = "player-image";
     playerEl.appendChild(playerImgEl);
   }
@@ -1399,6 +1678,7 @@ for (const path in roomImagesGlob) {
     if (!hasTileContent(playerPos.x, playerPos.y)) {
       nextCell.classList.add("out-of-bounds");
     }
+    playerEl.classList.toggle("custom-avatar", currentPlayerImageSrc !== playerImageSrc);
     playerEl.classList.toggle("first-visit-highlight", showFirstVisitHighlight);
     playerImgEl.style.transform = `rotate(${headingToRotation[playerHeading]}deg)`;
     nextCell.appendChild(playerEl);
@@ -1474,6 +1754,7 @@ for (const path in roomImagesGlob) {
     updateMuteButtonUI();
     gameContainerEl = document.getElementById("game-container");
     updateBlackoutUI();
+    setupAvatarDrawing();
 
     renderGrid();
     document.getElementById("btn-left")?.addEventListener("click", turnLeft);
