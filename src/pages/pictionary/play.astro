@@ -7,14 +7,14 @@ import Layout from '../../layouts/Layout.astro';
   <!-- ENTER CODE SCREEN -->
   <div id="screen-code" class="screen">
     <div class="join-card">
-      <a href="/pictionary" class="back-link">← Back</a>
-      <h1>🎨 Join Room</h1>
+      <a href="/pictionary" class="back-link">← BACK</a>
+      <h1>JOIN<span class="ja">参加</span></h1>
       <div class="field">
-        <label for="code-input">Room Code</label>
+        <label for="code-input">ROOM CODE / ルームコード</label>
         <input id="code-input" type="text" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off" spellcheck="false" inputmode="text" />
         <p class="input-hint">ローマ字で入力 / Use English letters &amp; numbers</p>
       </div>
-      <button id="code-btn" class="primary-btn">Next</button>
+      <button id="code-btn" class="primary-btn">NEXT</button>
       <p id="code-error" class="error-msg hidden"></p>
     </div>
   </div>
@@ -22,20 +22,19 @@ import Layout from '../../layouts/Layout.astro';
   <!-- ENTER NAME SCREEN -->
   <div id="screen-name" class="screen screen--hidden">
     <div class="join-card">
-      <h1>What's your name?</h1>
+      <h1>YOUR NAME?<span class="ja">なまえは？</span></h1>
       <div class="field">
-        <label for="name-input">Your Name</label>
+        <label for="name-input">NAME / なまえ</label>
         <input id="name-input" type="text" maxlength="20" placeholder="e.g. Taro" autocomplete="off" />
       </div>
-      <button id="name-btn" class="primary-btn">Join!</button>
+      <button id="name-btn" class="primary-btn">JOIN</button>
     </div>
   </div>
 
   <!-- LOBBY WAITING SCREEN -->
   <div id="screen-lobby" class="screen screen--hidden">
     <div class="center-panel">
-      <div class="lobby-icon">⏳</div>
-      <h2>Waiting for the host to start…</h2>
+      <h2>WAITING…<span class="ja">まっています…</span></h2>
       <p id="lobby-player-count" class="lobby-count">0 players in room</p>
       <ul id="lobby-player-list" class="lobby-list"></ul>
     </div>
@@ -46,7 +45,7 @@ import Layout from '../../layouts/Layout.astro';
     <div class="drawing-layout">
       <div class="drawing-header">
         <div class="drawing-word-box">
-          <span class="word-label">Draw:</span>
+          <span class="word-label">DRAW / かけ：</span>
           <strong id="draw-word">—</strong>
         </div>
         <div id="draw-timer" class="timer-display">90</div>
@@ -96,8 +95,8 @@ import Layout from '../../layouts/Layout.astro';
       </div>
       <canvas id="view-canvas" class="view-canvas"></canvas>
       <div class="guess-row">
-        <input id="guess-input" type="text" maxlength="60" placeholder="Your guess…" autocomplete="off" />
-        <button id="guess-btn" class="guess-submit-btn">Submit</button>
+        <input id="guess-input" type="text" maxlength="60" placeholder="えいごでかいとう / Guess in English…" autocomplete="off" />
+        <button id="guess-btn" class="guess-submit-btn">SEND</button>
         <span id="guess-feedback" class="guess-feedback hidden"></span>
       </div>
     </div>
@@ -107,19 +106,18 @@ import Layout from '../../layouts/Layout.astro';
   <div id="screen-end" class="screen screen--hidden">
     <div class="end-layout">
       <div class="end-left">
-        <div class="end-icon">🎉</div>
-        <h2>Time's up!</h2>
-        <p class="reveal-label">The word was:</p>
+        <h2>TIME'S UP!<span class="ja">じかんきれ！</span></h2>
+        <p class="reveal-label">ことばは / THE WORD:</p>
         <p id="end-word" class="reveal-word">—</p>
-        <p class="waiting-next">Waiting for host to start next round…</p>
+        <p class="waiting-next">つぎのラウンドをまっています… / Waiting for next round…</p>
         <div id="end-guess-row" class="end-guess-row hidden">
-          <input id="end-guess-input" type="text" maxlength="60" placeholder="Still got a guess?" autocomplete="off" />
-          <button id="end-guess-btn" class="guess-submit-btn">Submit</button>
+          <input id="end-guess-input" type="text" maxlength="60" placeholder="えいごでかいとう / Guess in English…" autocomplete="off" />
+          <button id="end-guess-btn" class="guess-submit-btn">SEND</button>
           <span id="end-guess-feedback" class="guess-feedback hidden"></span>
         </div>
       </div>
       <div class="end-right">
-        <h3 class="guesses-title">Guesses</h3>
+        <h3 class="guesses-title">GUESSES / かいとう</h3>
         <ul id="guesses-list" class="guesses-list">
           <li class="no-guesses">No guesses this round.</li>
         </ul>
@@ -133,7 +131,7 @@ import Layout from '../../layouts/Layout.astro';
   import PartySocket from 'partysocket';
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-  function el<T extends HTMLElement>(id: string) { return document.getElementById(id) as T; }
+  function el<T = HTMLElement>(id: string): T { return document.getElementById(id)! as unknown as T; }
   function escHtml(s: string) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
@@ -183,7 +181,7 @@ import Layout from '../../layouts/Layout.astro';
   el('code-btn').addEventListener('click', () => {
     const val = (el<HTMLInputElement>('code-input')).value.trim().toUpperCase();
     if (val.length !== 4) {
-      showError('code-error', 'Enter a 4-character room code.');
+      showError('code-error', '4文字のコードをにゅうりょく / Enter a 4-character code');
       return;
     }
     roomCode = val;
@@ -244,7 +242,7 @@ import Layout from '../../layouts/Layout.astro';
           el('draw-word').textContent = msg.word ?? '—';
           showScreen('screen-drawing');
         } else {
-          el('viewer-drawer-label').textContent = `✏️ ${msg.drawerName} is drawing…`;
+          el('viewer-drawer-label').textContent = `${msg.drawerName} がかいています / ${msg.drawerName} IS DRAWING`;
           showScreen('screen-viewer');
         }
         startTimer(msg.roundTimerEnd, myRole === 'drawer' ? 'draw-timer' : 'view-timer');
@@ -285,7 +283,7 @@ import Layout from '../../layouts/Layout.astro';
 
   // ── Lobby list ────────────────────────────────────────────────────────────
   function updateLobbyList(players: { id: string; name: string }[]) {
-    el('lobby-player-count').textContent = `${players.length} player${players.length !== 1 ? 's' : ''} in room`;
+    el('lobby-player-count').textContent = `${players.length}人 / ${players.length} PLAYER${players.length !== 1 ? 'S' : ''}`;
     el('lobby-player-list').innerHTML = players.map(p =>
       `<li class="lobby-item">${escHtml(p.name)}</li>`
     ).join('');
@@ -481,7 +479,7 @@ import Layout from '../../layouts/Layout.astro';
   function renderGuesses(guesses: { name: string; text: string }[]) {
     const list = el('guesses-list');
     if (guesses.length === 0) {
-      list.innerHTML = '<li class="no-guesses">No guesses this round.</li>';
+      list.innerHTML = '<li class="no-guesses">かいとうなし / No guesses</li>';
     } else {
       list.innerHTML = guesses.map(g =>
         `<li class="guess-item"><span class="guess-name">${escHtml(g.name)}</span><span class="guess-text">${escHtml(g.text)}</span></li>`
@@ -533,6 +531,27 @@ import Layout from '../../layouts/Layout.astro';
     color: var(--color-primary);
     font-size: 2rem;
     margin-bottom: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .ja {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #aaa;
+  }
+
+  .center-panel h2 {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .end-left h2 {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
   }
 
   .field { margin-bottom: 1.25rem; }
@@ -582,7 +601,6 @@ import Layout from '../../layouts/Layout.astro';
     box-shadow: 0 8px 30px rgba(0,0,0,0.08);
   }
 
-  .lobby-icon, .end-icon { font-size: 3rem; margin-bottom: 1rem; }
   .center-panel h2 { color: var(--color-primary); font-size: 1.6rem; margin-bottom: 0.5rem; }
 
   .lobby-count { color: #888; margin-bottom: 1rem; }
