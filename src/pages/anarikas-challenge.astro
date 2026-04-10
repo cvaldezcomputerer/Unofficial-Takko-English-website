@@ -40,7 +40,9 @@ const categoriesJson = JSON.stringify(categories);
 
       <div class="mode-select" id="mode-select">
         <button class="mode-btn active" data-mode="easy">Easy ／ かんたん</button>
+        <button class="mode-btn" data-mode="medium">Medium ／ ふつう</button>
         <button class="mode-btn" data-mode="hard">Hard ／ むずかしい</button>
+        <button class="mode-btn" data-mode="challenge">Challenge ／ チャレンジ</button>
       </div>
 
       <div class="modal-footer">
@@ -416,9 +418,12 @@ const categoriesJson = JSON.stringify(categories);
     progressLabel.textContent = `${wordIndex + 1} / ${words.length}`;
     scoreDisplay.textContent = `${score} / ${wordIndex}`;
 
-    if (lastMode === 'easy') {
-      questionLabel.textContent = 'What does this mean? ／ どういう いみ？';
-      englishWord.textContent = word.ja[0];
+    if (lastMode === 'easy' || lastMode === 'medium') {
+      const isMedium = lastMode === 'medium';
+      questionLabel.textContent = isMedium
+        ? 'What does this mean? ／ どういう いみ？'
+        : 'What is this in Japanese? ／ にほんごでなんですか？';
+      englishWord.textContent = isMedium ? word.ja[0] : word.en;
       answerInput.classList.add('hidden');
       submitBtn.classList.add('hidden');
       choicesGrid.classList.remove('hidden');
@@ -428,43 +433,51 @@ const categoriesJson = JSON.stringify(categories);
       choices.forEach(choice => {
         const btn = document.createElement('button');
         btn.className = 'choice-btn';
-        btn.textContent = choice.en;
-        btn.addEventListener('click', () => submitChoiceAnswer(choice.en, word));
+        const display = isMedium ? choice.en : choice.ja[0];
+        const correctText = isMedium ? word.en : word.ja[0];
+        btn.textContent = display;
+        btn.addEventListener('click', () => submitChoiceAnswer(display, correctText, word));
         choicesGrid.appendChild(btn);
       });
     } else {
-      questionLabel.textContent = 'What is this in Japanese? ／ にほんごでなんですか？';
-      englishWord.textContent = word.en;
+      // hard: show English, type Japanese
+      // challenge: show Japanese, type English
+      const isChallenge = lastMode === 'challenge';
+      questionLabel.textContent = isChallenge
+        ? 'What is this in English? ／ えいごでなんですか？'
+        : 'What is this in Japanese? ／ にほんごでなんですか？';
+      englishWord.textContent = isChallenge ? word.ja[0] : word.en;
       choicesGrid.classList.add('hidden');
       answerInput.classList.remove('hidden');
       submitBtn.classList.remove('hidden');
       answerInput.value = '';
       answerInput.disabled = false;
+      answerInput.placeholder = isChallenge ? 'Type in English' : 'ひらがなでこたえてください';
       submitBtn.disabled = false;
       answerInput.focus();
     }
   }
 
-  function submitChoiceAnswer(chosenEn, word) {
+  function submitChoiceAnswer(chosenText, correctText, word) {
     choicesGrid.querySelectorAll('.choice-btn').forEach(btn => {
       btn.disabled = true;
-      if (btn.textContent === word.en) btn.classList.add('choice-correct');
-      else if (btn.textContent === chosenEn) btn.classList.add('choice-wrong');
+      if (btn.textContent === correctText) btn.classList.add('choice-correct');
+      else if (btn.textContent === chosenText) btn.classList.add('choice-wrong');
     });
 
-    const correct = chosenEn === word.en;
+    const correct = chosenText === correctText;
     if (correct) {
       score++;
       feedbackIcon.textContent = 'O';
       feedbackIcon.className = 'feedback-icon correct';
       feedbackText.innerHTML = 'Correct! ／ <span class="ja">せいかい！</span>';
     } else {
-      missed.push({ en: word.en, yourAnswer: chosenEn, correct: word.en });
+      missed.push({ en: word.en, yourAnswer: chosenText, correct: correctText });
       feedbackIcon.textContent = 'X';
       feedbackIcon.className = 'feedback-icon wrong';
       feedbackText.innerHTML = 'Not quite. ／ <span class="ja">ざんねん！</span>';
     }
-    acceptedEl.innerHTML = `<span class="accepted-label">Answer ／ こたえ：</span> ${word.en}`;
+    acceptedEl.innerHTML = `<span class="accepted-label">Answer ／ こたえ：</span> ${correctText}`;
     feedbackCard.classList.remove('hidden');
   }
 
@@ -477,7 +490,10 @@ const categoriesJson = JSON.stringify(categories);
     answerInput.disabled = true;
     submitBtn.disabled = true;
 
-    const correct = checkAnswer(input, word.ja);
+    const isChallenge = lastMode === 'challenge';
+    const correct = isChallenge
+      ? normalize(input) === normalize(word.en)
+      : checkAnswer(input, word.ja);
 
     if (correct) {
       score++;
@@ -485,13 +501,15 @@ const categoriesJson = JSON.stringify(categories);
       feedbackIcon.className = 'feedback-icon correct';
       feedbackText.innerHTML = 'Correct! ／ <span class="ja">せいかい！</span>';
     } else {
-      missed.push({ en: word.en, yourAnswer: input, correct: word.ja[0] });
+      const correctAnswer = isChallenge ? word.en : word.ja[0];
+      missed.push({ en: word.en, yourAnswer: input, correct: correctAnswer });
       feedbackIcon.textContent = 'X';
       feedbackIcon.className = 'feedback-icon wrong';
       feedbackText.innerHTML = 'Not quite. ／ <span class="ja">ざんねん！</span>';
     }
 
-    acceptedEl.innerHTML = `<span class="accepted-label">Accepted answers ／ せいかい：</span> ${word.ja.join('、 ')}`;
+    const answersLabel = isChallenge ? word.en : word.ja.join('、 ');
+    acceptedEl.innerHTML = `<span class="accepted-label">Answer ／ こたえ：</span> ${answersLabel}`;
     feedbackCard.classList.remove('hidden');
   }
 
@@ -797,9 +815,23 @@ const categoriesJson = JSON.stringify(categories);
     font-weight: 700;
   }
 
+  .mode-btn[data-mode="medium"].active {
+    background: #e6a817;
+    border-color: #e6a817;
+    color: white;
+    font-weight: 700;
+  }
+
   .mode-btn[data-mode="hard"].active {
     background: #c0394b;
     border-color: #c0394b;
+    color: white;
+    font-weight: 700;
+  }
+
+  .mode-btn[data-mode="challenge"].active {
+    background: #7c5cbf;
+    border-color: #7c5cbf;
     color: white;
     font-weight: 700;
   }
