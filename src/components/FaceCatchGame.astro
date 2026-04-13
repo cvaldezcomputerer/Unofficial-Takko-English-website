@@ -384,7 +384,8 @@
   const SPAWN_MS     = 1600;
   const BASE_SPEED   = 0.0028; // progress per frame (~6s at 60fps)
   const MAX_SPEED    = 0.007;  // cap for time mode (~2.4s)
-  const BAD_CHANCE   = 0.3;    // 30% bad items
+  const BAD_CHANCE   = 0.28;   // 28% bad items
+  const BONUS_CHANCE = 0.07;   // 7% rare ABC bonus
   const ITEM_R       = 26;     // fixed radius
   const HEART_R      = 38;     // collision radius of heart
   const TIME_LIMIT   = 60;     // seconds for time attack
@@ -410,8 +411,8 @@
   let gameStartTime = 0;
   let timeLeft      = TIME_LIMIT;
 
-  // Heart position (canvas coords, follows nose)
-  let heartX = W / 2, heartY = H / 2;
+  // One heart per detected face (up to 2)
+  let hearts = []; // [{x, y}, ...]
 
   // ── MediaPipe ─────────────────────────────────────────────────────────────
   let faceLandmarker = null;
@@ -447,7 +448,9 @@
   function updateHud() {
     scoreEl.textContent = String(score);
     bestEl.textContent  = String(bestScore);
-    livesEl.textContent = '❤️'.repeat(lives) + '🖤'.repeat(MAX_LIVES - lives);
+    livesEl.textContent = gameMode === 'time'
+      ? '—'
+      : '❤️'.repeat(lives) + '🖤'.repeat(MAX_LIVES - lives);
   }
 
   function itemSpeed() {
@@ -487,7 +490,7 @@
         delegate: 'GPU',
       },
       runningMode: 'VIDEO',
-      numFaces: 1,
+      numFaces: 2,
       outputFaceBlendshapes: false,
       outputFacialTransformationMatrixes: false,
     });
@@ -541,12 +544,15 @@
       startX = pad + Math.random() * (W - pad * 2); startY = H + pad;
       endX   = pad + Math.random() * (W - pad * 2); endY   = -pad;
     }
-    const type = Math.random() < BAD_CHANCE ? 'bad' : 'good';
-    const label = gameTheme === 'letters'
-      ? (type === 'good'
-          ? CAPITAL_LETTERS[Math.floor(Math.random() * CAPITAL_LETTERS.length)]
-          : BAD_POOL[Math.floor(Math.random() * BAD_POOL.length)])
-      : null;
+    const roll = Math.random();
+    const type = roll < BONUS_CHANCE ? 'bonus' : roll < BONUS_CHANCE + BAD_CHANCE ? 'bad' : 'good';
+    const label = type === 'bonus'
+      ? 'ABC'
+      : gameTheme === 'letters'
+        ? (type === 'good'
+            ? CAPITAL_LETTERS[Math.floor(Math.random() * CAPITAL_LETTERS.length)]
+            : BAD_POOL[Math.floor(Math.random() * BAD_POOL.length)])
+        : null;
     items.push({ id: nextId++, startX, startY, endX, endY, progress: 0, speed: itemSpeed(), type, label });
   }
 
@@ -563,19 +569,20 @@
   // ── Face detection ────────────────────────────────────────────────────────
   function detectFace() {
     if (!faceLandmarker || video.readyState < 2) return;
-    const results = faceLandmarker.detectForVideo(video, performance.now());
-    if (results.faceLandmarks.length > 0) {
-      faceDetected = true;
-      const lm   = results.faceLandmarks[0];
-      // Landmark 1 = nose tip — good center-of-face anchor
-      const nose = lm[1];
-      const tx   = (1 - nose.x) * W; // mirror X for selfie
-      const ty   = nose.y * H;
-      heartX = heartX * 0.7 + tx * 0.3;
-      heartY = heartY * 0.7 + ty * 0.3;
-    } else {
-      faceDetected = false;
+    const detected = faceLandmarker.detectForVideo(video, performance.now()).faceLandmarks;
+    faceDetected = detected.length > 0;
+    for (let i = 0; i < detected.length; i++) {
+      const nose = detected[i][1]; // landmark 1 = nose tip
+      const tx = (1 - nose.x) * W;
+      const ty = nose.y * H;
+      if (hearts[i]) {
+        hearts[i].x = hearts[i].x * 0.7 + tx * 0.3;
+        hearts[i].y = hearts[i].y * 0.7 + ty * 0.3;
+      } else {
+        hearts[i] = { x: tx, y: ty };
+      }
     }
+    hearts.length = detected.length;
   }
 
   // ── Drawing ───────────────────────────────────────────────────────────────
@@ -618,7 +625,21 @@
     const { x, y, r } = itemCoords(item);
     ctx.save();
 
-    if (gameTheme === 'letters') {
+    if (item.type === 'bonus') {
+      // White circle with gold glow — same in both themes
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle   = '#ffffff';
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
+      ctx.shadowBlur  = 22;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle    = '#92400e';
+      ctx.font         = `bold ${Math.round(r * 0.8)}px Georgia, 'Times New Roman', serif`;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('ABC', x, y + 1);
+    } else if (gameTheme === 'letters') {
       // All circles are yellow — content tells good from bad
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -734,13 +755,12 @@
       return;
     }
 
-    // 5. Advance items & check per-frame collision
+    // 5. Advance items & check per-frame collision against all hearts
     const toRemove = [];
     for (const item of items) {
       item.progress += item.speed;
       const { x, y, r } = itemCoords(item);
-      const dist = Math.hypot(x - heartX, y - heartY);
-      const hit  = dist < HEART_R * 0.9 + r * 0.7;
+      const hit = hearts.some((h) => Math.hypot(x - h.x, y - h.y) < HEART_R * 0.9 + r * 0.7);
 
       if (hit && !item.resolved) {
         item.resolved = true;
@@ -756,22 +776,33 @@
       items = items.filter((i) => i !== item);
       const { x, y } = itemCoords(item);
 
-      if (item.type === 'good') {
+      if (item.type === 'bonus') {
+        if (hit) {
+          score += 5;
+          effects.push({ x, y: y - 10, text: '+5', color: '#ffd700', life: 42, maxLife: 42, dy: 1.8, fontSize: 26 });
+          updateHud();
+        }
+      } else if (item.type === 'good') {
         if (hit) {
           score += 10;
           effects.push({ x, y: y - 10, text: '+10', color: '#69f0ae', life: 42, maxLife: 42, dy: 1.8 });
-        } else {
-          // No penalty for missing a good item
-        }
-        updateHud();
-        if (lives <= 0) { endGame(); return; }
-      } else {
-        if (hit) {
-          lives--;
-          missFlash = 22;
-          effects.push({ x, y, text: 'ouch', color: '#ff5252', life: 35, maxLife: 35, dy: 1.5, fontSize: 18 });
           updateHud();
-          if (lives <= 0) { endGame(); return; }
+        }
+      } else {
+        // bad item
+        if (hit) {
+          if (gameMode === 'time') {
+            score = Math.max(0, score - 1);
+            effects.push({ x, y, text: '-1', color: '#ff5252', life: 35, maxLife: 35, dy: 1.5, fontSize: 18 });
+            missFlash = 12;
+            updateHud();
+          } else {
+            lives--;
+            missFlash = 22;
+            effects.push({ x, y, text: 'ouch', color: '#ff5252', life: 35, maxLife: 35, dy: 1.5, fontSize: 18 });
+            updateHud();
+            if (lives <= 0) { endGame(); return; }
+          }
         }
       }
     }
@@ -785,8 +816,8 @@
     // 7. Draw items
     for (const item of items) drawItem(item);
 
-    // 8. Draw heart
-    drawHeart(heartX, heartY);
+    // 8. Draw all hearts
+    for (const h of hearts) drawHeart(h.x, h.y);
 
     // 9. Floating text effects
     drawEffects();
@@ -814,8 +845,7 @@
     gameMode = mode;
     loadBest();
     score = 0; lives = MAX_LIVES; items = []; effects = []; missFlash = 0;
-    faceDetected = false;
-    heartX = W / 2; heartY = H / 2;
+    faceDetected = false; hearts = [];
     timeLeft = TIME_LIMIT;
     updateHud();
 
@@ -842,7 +872,7 @@
     stopSpawning();
     if (frameId) { cancelAnimationFrame(frameId); frameId = null; }
     score = 0; lives = MAX_LIVES; items = []; effects = []; missFlash = 0;
-    faceDetected = false;
+    faceDetected = false; hearts = [];
     timeLeft = TIME_LIMIT;
     updateHud();
 
