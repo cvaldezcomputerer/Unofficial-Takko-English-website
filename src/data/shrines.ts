@@ -11,6 +11,7 @@ export interface Shrine {
   description: Array<{ en: string; ja: string }>;
   address: { en: string; ja: string };
   directions: { en: string; ja: string };
+  coords?: [number, number]; // [lat, lng] — approximate until verified on-site
   mainImage?: string;
   roadViewImage?: string;
   galleryImages?: string[];
@@ -35,23 +36,24 @@ export const shrines: Shrine[] = [
         ja: '田子町にある稲荷神社です。高い朱色の鳥居と木々の中を登る急な石段が特徴です。',
       },
       {
-        en: 'The shrine grounds contain several smaller sub-shrines, each dedicated to a different deity.',
-        ja: '境内にはいくつかの末社があり、それぞれ異なる神様をお祀りしています。',
+        en: 'The exact name of this shrine is not clear — 奉納 and 稲荷 are general terms used at many shrines across Japan. This shrine is notable for its metal torii gate and stone steps. A metal torii gate is unusual and rarely seen.',
+        ja: 'この神社の正確な名前は不明です。「奉納」と「稲荷」は日本各地の多くの神社で使われる一般的な言葉です。金属製の鳥居と石段が特徴的です。金属製の鳥居は珍しく、あまり見かけることがありません。',
       },
     ],
     address: {
-      en: 'Takko Machi, Sannohe-gun, Aomori',
-      ja: '青森県三戸郡田子町',
+      en: '14 Tose, Takko, Sannohe District, Aomori 039-0314, Japan',
+      ja: '〒039-0314 青森県三戸郡田子町戸瀬14',
     },
     directions: {
       en: 'Placeholder — add directions here.',
       ja: 'アクセス情報を追加してください。',
     },
-    mainImage: '/images/shrines/奉納/far-away-view.jpeg',
+    coords: [40.28441834579857, 141.07665591026574],
+    mainImage: '/images/shrines/奉納/front-of-shrine.jpeg',
     roadViewImage: '/images/shrines/奉納/view-from-road.jpeg',
     galleryLayout: 'grid',
     galleryImages: [
-      '/images/shrines/奉納/front-of-shrine.jpeg',
+      '/images/shrines/奉納/far-away-view.jpeg',
       '/images/shrines/奉納/closer-front-view.jpeg',
       '/images/shrines/奉納/shrine-main-building.jpeg',
       '/images/shrines/奉納/metal-showcase.jpeg',
@@ -59,25 +61,21 @@ export const shrines: Shrine[] = [
     ],
     subShrines: [
       {
-        name: { en: 'Placeholder Sub-shrine A', ja: '末社A（仮）' },
-        description: { en: 'Placeholder description.', ja: '説明文（仮）' },
+        name: { en: 'Massha', ja: '末社' },
+        description: { en: 'Unknown deity.', ja: '祭神不明' },
         image: '/images/shrines/奉納/mini-shrine-1.jpeg',
       },
       {
-        name: { en: 'Placeholder Sub-shrine B', ja: '末社B（仮）' },
-        description: { en: 'Placeholder description.', ja: '説明文（仮）' },
+        name: { en: 'Massha', ja: '末社' },
+        description: { en: 'Unknown deity.', ja: '祭神不明' },
         image: '/images/shrines/奉納/mini-shrine-2.jpeg',
       },
       {
-        name: { en: 'Placeholder Sub-shrine C', ja: '末社C（仮）' },
-        image: '/images/shrines/奉納/mini-shrine-3.jpeg',
-      },
-      {
-        name: { en: 'Placeholder Sub-shrine D', ja: '末社D（仮）' },
+        name: { en: 'Souzen-sama', ja: '蒼縉様' },
         image: '/images/shrines/奉納/mini-shrine-4.jpeg',
       },
       {
-        name: { en: 'Placeholder Sub-shrine E', ja: '末社E（仮）' },
+        name: { en: 'Mountain God', ja: '山の神' },
         image: '/images/shrines/奉納/mini-shrine-6.jpeg',
       },
     ],

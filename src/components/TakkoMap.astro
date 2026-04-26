@@ -1,0 +1,342 @@
+---
+// TakkoMap.astro
+// Interactive map of 田子町 (Takko-machi, Aomori).
+// No tile layer — plain background with layered GeoJSON data.
+
+export interface MapMarker {
+  coords: [number, number];
+  label: string;
+  labelJa?: string;
+  address?: string;
+  href?: string;
+  type?: 'shrine' | 'restaurant' | 'default';
+}
+
+interface Props {
+  markers?: MapMarker[];
+}
+
+const { markers = [] } = Astro.props;
+---
+
+<div class="map-card">
+  <div class="map-card__header">
+    <span class="map-card__title">Takko Map</span>
+    <span class="map-card__title-ja">田子町</span>
+  </div>
+  <div id="takko-map" aria-label="田子町 地図 / Map of Takko-machi" data-markers={JSON.stringify(markers)}></div>
+  <div class="map-card__footer">
+    Hover over the map to use scroll zoom &nbsp;·&nbsp; マウスを乗せてスクロール操作
+  </div>
+</div>
+
+<style is:global>
+  @import 'leaflet/dist/leaflet.css';
+
+  #takko-map .leaflet-container {
+    background: #dce8d8;
+  }
+</style>
+
+<style>
+  .map-card {
+    border: 3px solid #d4a373;
+    border-radius: 16px;
+    overflow: hidden;
+    background: white;
+  }
+
+  .map-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 2px solid #d4a373;
+    background: white;
+  }
+
+  .map-card__title {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #4a7c59;
+  }
+
+  .map-card__title-ja {
+    font-size: 0.95rem;
+    color: #999;
+  }
+
+  #takko-map {
+    width: 100%;
+    height: 500px;
+    display: block;
+  }
+
+  .map-card__footer {
+    padding: 0.6rem 1.25rem;
+    font-size: 0.8rem;
+    color: #aaa;
+    border-top: 1px solid #eee;
+    background: white;
+    text-align: center;
+  }
+
+  /* --- Markers --- */
+  .map-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .map-marker svg {
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+  }
+  .map-marker-label {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px white, 0 0 4px white;
+  }
+  .map-marker-label--shrine { color: #b5291c; }
+  .map-marker-label--osm    { color: #8b2020; }
+
+  /* --- Popups --- */
+  .map-popup {
+    font-family: 'Fredoka', sans-serif;
+    line-height: 1.4;
+  }
+  .map-popup__name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4a7c59;
+    margin-bottom: 2px;
+  }
+  .map-popup__name-ja {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 6px;
+  }
+  .map-popup__address {
+    font-size: 0.78rem;
+    color: #666;
+    margin-bottom: 6px;
+  }
+  .map-popup__link {
+    font-size: 0.82rem;
+    color: #e76f51;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .map-popup__link:hover { text-decoration: underline; }
+</style>
+
+<script>
+  import L from 'leaflet';
+  import type { FeatureCollection, Feature } from 'geojson';
+  import type { MapMarker } from './TakkoMap.astro';
+
+  const container = document.getElementById('takko-map')!;
+  const markers: MapMarker[] = JSON.parse(container.dataset.markers ?? '[]');
+
+  const map = L.map(container, {
+    scrollWheelZoom: false,
+    maxBoundsViscosity: 1.0,
+    attributionControl: false,
+    zoomSnap: 0.25,
+  }).setView([40.307, 141.064], 12);
+
+  // ── Style helpers ────────────────────────────────────────────────
+
+  function roadStyle(feature: Feature | undefined) {
+    const hw = feature?.properties?.highway as string | undefined;
+    switch (hw) {
+      case 'trunk':
+      case 'primary':
+        return { color: '#e76f51', weight: 5, opacity: 0.9 };
+      case 'secondary':
+      case 'tertiary':
+        return { color: '#d4a373', weight: 3, opacity: 0.9 };
+      case 'residential':
+      case 'unclassified':
+      case 'service':
+        return { color: '#bba', weight: 1.5, opacity: 0.7 };
+      default:
+        return { color: '#ccc', weight: 0.75, opacity: 0.5, dashArray: '3 4' };
+    }
+  }
+
+  // ── Fetch all layers in parallel ─────────────────────────────────
+
+  const [boundaryData, forestData, riverData, buildingData, roadData, shrineData] =
+    await Promise.all([
+      fetch('/data/takko-boundary.geojson').then((r) => r.json()),
+      fetch('/data/takko-forests.geojson').then((r) => r.json()),
+      fetch('/data/takko-rivers.geojson').then((r) => r.json()),
+      fetch('/data/takko-buildings.geojson').then((r) => r.json()),
+      fetch('/data/takko-roads.geojson').then((r) => r.json()),
+      fetch('/data/takko-shrines.geojson').then((r) => r.json()),
+    ]) as FeatureCollection[];
+
+  // ── Layer 1: Forests ─────────────────────────────────────────────
+  L.geoJSON(forestData, {
+    style: {
+      color: '#5a8a4a',
+      weight: 0.5,
+      fillColor: '#7ab86a',
+      fillOpacity: 0.25,
+    },
+    interactive: false,
+  }).addTo(map);
+
+  // ── Layer 2: Rivers ──────────────────────────────────────────────
+  L.geoJSON(riverData, {
+    style: (feature) => {
+      const ww = feature?.properties?.waterway as string | undefined;
+      return ww === 'river'
+        ? { color: '#5b9fc4', weight: 4, opacity: 0.8 }
+        : { color: '#7bb8d8', weight: 1.5, opacity: 0.7 };
+    },
+    interactive: false,
+  }).addTo(map);
+
+  // ── Layer 3: Buildings ───────────────────────────────────────────
+  L.geoJSON(buildingData, {
+    style: {
+      color: '#c4b49a',
+      weight: 0.5,
+      fillColor: '#ddd0bb',
+      fillOpacity: 0.6,
+    },
+    interactive: false,
+  }).addTo(map);
+
+  // ── Layer 4: Roads ───────────────────────────────────────────────
+  L.geoJSON(roadData, {
+    style: roadStyle,
+    interactive: false,
+  }).addTo(map);
+
+  // ── Layer 5: Boundary outline (on top of fill layers) ────────────
+  const polygonFeature = boundaryData.features.find(
+    (f) => f.geometry.type === 'Polygon'
+  );
+  if (polygonFeature) {
+    const boundaryLayer = L.geoJSON(polygonFeature, {
+      style: {
+        color: '#4a7c59',
+        weight: 2.5,
+        fillOpacity: 0,
+        interactive: false,
+      },
+    }).addTo(map);
+
+    const bounds = boundaryLayer.getBounds();
+    map.fitBounds(bounds, { padding: [24, 24] });
+    map.setMaxBounds(bounds.pad(0.02));
+    map.setMinZoom(Math.round((map.getZoom() - 0.5) * 4) / 4);
+
+    // Inverse mask — covers everything outside the boundary
+    const geom = polygonFeature.geometry as import('geojson').Polygon;
+    const worldRing: [number, number][] = [[-90, -180], [-90, 180], [90, 180], [90, -180]];
+    const townRing: [number, number][] = geom.coordinates[0].map(([lng, lat]) => [lat, lng]);
+    L.polygon([worldRing, townRing], {
+      stroke: false,
+      fillColor: '#dce8d8',
+      fillOpacity: 1,
+      interactive: false,
+    }).addTo(map);
+  }
+
+  // ── Layer 6: OSM shrine markers ──────────────────────────────────
+  const TORII_SM = `<svg viewBox="0 0 120 100" width="18" height="15" xmlns="http://www.w3.org/2000/svg" fill="#b5291c" opacity="0.75">
+    <rect x="22" y="28" width="10" height="72" rx="2"/>
+    <rect x="88" y="28" width="10" height="72" rx="2"/>
+    <rect x="18" y="47" width="84" height="8" rx="2"/>
+    <path d="M4,25 L4,17 Q14,3 24,11 L96,11 Q106,3 116,17 L116,25 Z"/>
+    <rect x="18" y="25" width="16" height="5" rx="1"/>
+    <rect x="86" y="25" width="16" height="5" rx="1"/>
+  </svg>`;
+
+  function osmShrineIcon() {
+    return L.divIcon({
+      html: `<div class="map-marker">${TORII_SM}</div>`,
+      className: '',
+      iconAnchor: [9, 15],
+      popupAnchor: [0, -17],
+    });
+  }
+
+  // Polygon shrines → marker at centroid
+  for (const f of shrineData.features) {
+    if (f.geometry.type !== 'Polygon' && f.geometry.type !== 'MultiPolygon') continue;
+    const name = (f.properties?.name as string | null) ?? null;
+    const layer = L.geoJSON(f, {
+      style: { color: '#b5291c', weight: 1, fillColor: '#b5291c', fillOpacity: 0.12 },
+    }).addTo(map);
+    const center = layer.getBounds().getCenter();
+    L.marker(center, { icon: osmShrineIcon() })
+      .bindPopup(`<div class="map-popup"><div class="map-popup__name">${name ?? '神社'}</div></div>`)
+      .addTo(map);
+  }
+
+  // Point shrines → marker directly
+  L.geoJSON(shrineData, {
+    filter: (f) => f.geometry.type === 'Point',
+    pointToLayer: (_feature, latlng) => {
+      return L.marker(latlng, { icon: osmShrineIcon() })
+        .bindPopup(`<div class="map-popup"><div class="map-popup__name">神社</div></div>`);
+    },
+  }).addTo(map);
+
+  // ── Layer 7: Documented markers (prop) ──────────────────────────
+  const TORII_LG = `<svg viewBox="0 0 120 100" width="28" height="24" xmlns="http://www.w3.org/2000/svg" fill="#b5291c">
+    <rect x="22" y="28" width="10" height="72" rx="2"/>
+    <rect x="88" y="28" width="10" height="72" rx="2"/>
+    <rect x="18" y="47" width="84" height="8" rx="2"/>
+    <path d="M4,25 L4,17 Q14,3 24,11 L96,11 Q106,3 116,17 L116,25 Z"/>
+    <rect x="18" y="25" width="16" height="5" rx="1"/>
+    <rect x="86" y="25" width="16" height="5" rx="1"/>
+  </svg>`;
+
+  const BOWL = `<svg viewBox="0 0 32 32" width="26" height="26" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#c05035" stroke-linecap="round">
+    <line x1="11" y1="4" x2="10" y2="15" stroke-width="2.5"/>
+    <line x1="21" y1="4" x2="22" y2="15" stroke-width="2.5"/>
+    <path d="M4 15 Q4 27 16 27 Q28 27 28 15 Z" fill="#e76f51" fill-opacity="0.15" stroke-width="1.5"/>
+    <line x1="4" y1="15" x2="28" y2="15" stroke-width="1.5"/>
+  </svg>`;
+
+  for (const m of markers) {
+    const isRestaurant = m.type === 'restaurant';
+    const iconHtml = isRestaurant ? BOWL : TORII_LG;
+    const anchor: [number, number] = isRestaurant ? [13, 13] : [14, 24];
+    const popupOffset: [number, number] = isRestaurant ? [0, -14] : [0, -26];
+
+    const icon = L.divIcon({
+      html: `<div class="map-marker">${iconHtml}</div>`,
+      className: '',
+      iconAnchor: anchor,
+      popupAnchor: popupOffset,
+    });
+
+    L.marker(m.coords, { icon })
+      .bindPopup(L.popup({ maxWidth: 220 }).setContent(`
+        <div class="map-popup">
+          <div class="map-popup__name">${m.label}</div>
+          ${m.labelJa ? `<div class="map-popup__name-ja">${m.labelJa}</div>` : ''}
+          ${m.address ? `<div class="map-popup__address">${m.address}</div>` : ''}
+          ${m.href ? `<a class="map-popup__link" href="${m.href}">View page →</a>` : ''}
+        </div>
+      `))
+      .addTo(map);
+  }
+
+  // ── Scroll zoom behaviour ────────────────────────────────────────
+  map.getContainer().addEventListener('mouseenter', () =>
+    map.scrollWheelZoom.enable()
+  );
+  map.getContainer().addEventListener('mouseleave', () =>
+    map.scrollWheelZoom.disable()
+  );
+</script>
