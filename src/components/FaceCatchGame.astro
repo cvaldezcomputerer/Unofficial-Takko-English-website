@@ -10,7 +10,7 @@
       <span class="hud-label">Best</span>
       <span class="hud-value" id="fcc-best">0</span>
     </div>
-    <div class="hud-card lives-card">
+    <div class="hud-card">
       <span class="hud-label">Lives</span>
       <span class="hud-value" id="fcc-lives">❤️❤️❤️</span>
     </div>
@@ -24,15 +24,19 @@
     <!-- Idle screen -->
     <div class="overlay-screen" id="fcc-screen-idle">
       <p class="screen-title">Catch</p>
-      <p class="screen-sub" id="fcc-theme-desc">Catch the letters! Dodge the emojis!</p>
+      <p class="screen-sub">Catch the capital letters! / 大文字をキャッチしよう！</p>
 
       <div class="theme-row">
-        <span class="theme-label">Theme / テーマ:</span>
-        <div class="theme-btns">
-          <button class="theme-btn active" data-theme="letters">A B C</button>
-          <button class="theme-btn" data-theme="classic">Circles</button>
+        <span class="theme-label">Players / 人数:</span>
+        <div class="theme-btns" id="fcc-player-btns">
+          <button class="theme-btn active" data-players="1">1</button>
+          <button class="theme-btn" data-players="2">2</button>
+          <button class="theme-btn" data-players="3">3</button>
+          <button class="theme-btn" data-players="4">4</button>
+          <button class="theme-btn" data-players="5">5</button>
         </div>
       </div>
+      <p class="screen-note player-warn" id="fcc-player-warn"></p>
 
       <div class="mode-btns">
         <button id="fcc-btn-time" class="primary-btn">
@@ -42,6 +46,10 @@
         <button id="fcc-btn-endless" class="primary-btn btn-endless">
           Endless
           <span class="btn-sub">How long can you last? / どこまでいける？</span>
+        </button>
+        <button id="fcc-btn-challenge" class="primary-btn btn-challenge">
+          Challenge
+          <span class="btn-sub">No emojis! / 絵文字なし！</span>
         </button>
       </div>
       <p class="screen-note">Camera access required / カメラが必要です</p>
@@ -85,7 +93,7 @@
     --muted: #9fa8da;
 
     position: relative;
-    width: min(860px, 94vw);
+    width: min(1032px, 96vw);
     margin: 2rem auto;
     padding: 1rem;
     border-radius: 24px;
@@ -163,8 +171,8 @@
     align-items: center;
     justify-content: center;
     gap: 0.9rem;
-    background: rgba(8, 8, 25, 0.86);
-    backdrop-filter: blur(6px);
+    background: rgba(8, 8, 25, 0.55);
+    backdrop-filter: blur(10px);
     border-radius: 18px;
     text-align: center;
     padding: 1.5rem;
@@ -173,6 +181,11 @@
 
   .overlay-screen.hidden {
     display: none;
+  }
+
+  #fcc-screen-idle {
+    background: #2a2c4a;
+    backdrop-filter: none;
   }
 
   .screen-title {
@@ -194,6 +207,11 @@
     margin: 0;
     font-size: 0.8rem;
     color: rgba(159, 168, 218, 0.6);
+  }
+
+  .player-warn {
+    color: rgba(255, 200, 80, 0.85);
+    min-height: 1.1em;
   }
 
   .screen-countdown {
@@ -249,6 +267,11 @@
     justify-content: center;
   }
 
+  .mode-btns .primary-btn {
+    flex: 1;
+    min-width: 140px;
+  }
+
   .primary-btn {
     border: none;
     border-radius: 12px;
@@ -273,6 +296,10 @@
 
   .btn-endless {
     background: #7c3aed;
+  }
+
+  .btn-challenge {
+    background: #0d7a5f;
   }
 
   .primary-btn:hover {
@@ -346,12 +373,6 @@
     to { transform: rotate(360deg); }
   }
 
-  @media (max-width: 640px) {
-    .howto-grid {
-      flex-direction: column;
-      gap: 0.6rem;
-    }
-  }
 </style>
 
 <script type="module" is:inline>
@@ -372,6 +393,7 @@
   const gameoverBestEl = document.getElementById('fcc-gameover-best');
   const btnTime        = document.getElementById('fcc-btn-time');
   const btnEndless     = document.getElementById('fcc-btn-endless');
+  const btnChallenge   = document.getElementById('fcc-btn-challenge');
   const btnRestart     = document.getElementById('fcc-btn-restart');
 
   // ── Canvas resolution ─────────────────────────────────────────────────────
@@ -390,21 +412,37 @@
   const HEART_R      = 38;     // collision radius of heart
   const TIME_LIMIT   = 60;     // seconds for time attack
 
-  const CAPITAL_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-  const BAD_EMOJIS      = ['😈','💀','👾','🕷️','🦠','🐛','🦂','💣','⚡','🔥'];
-  const BAD_NUMBERS     = '0123456789'.split('');
-  const BAD_POOL        = [...BAD_EMOJIS, ...BAD_NUMBERS];
+  const CAPITAL_LETTERS  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const BAD_EMOJIS       = ['😈','💀','👾','🕷️','🦠','🐛','🦂','💣','⚡','🔥'];
+  const BAD_NUMBERS      = '0123456789'.split('');
+  const BAD_POOL         = [...BAD_EMOJIS, ...BAD_NUMBERS];
+
+  const HIRAGANA_BAD     = ['あ','い','う','え','お','か','き','く','け','こ','さ','し','す','せ','そ','な','に','ぬ','の','は','ま','み','む','も','や','よ'];
+  const KATAKANA_BAD     = ['ア','イ','ウ','エ','オ','カ','キ','ク','ケ','コ','サ','シ','ス','セ','ソ','ナ','ニ','ノ','ハ','マ','ミ','モ','ヤ','ヨ'];
+  const KANJI_BAD        = ['一','二','三','四','五','六','七','八','九','十','日','月','火','水','木','金','土','山','川','人','大','小','中','上','下'];
+  const CHALLENGE_BAD_POOL = [...BAD_NUMBERS, ...HIRAGANA_BAD, ...KATAKANA_BAD, ...KANJI_BAD];
+
+  // ── Audio ─────────────────────────────────────────────────────────────────
+  const SFX_BASE = '/audio/directions-reaction-game/feedback/';
+  const GOOD_SFX = ['good-yeah-5','good-great-4','good-ohyeah-3','good-nice-2','good-nice-1']
+    .map(n => { const a = new Audio(`${SFX_BASE}${n}.mp3`); a.preload = 'auto'; return a; });
+  const BAD_SFX  = ['bad-woops-3','bad-ohno-1','bad-ohno-2']
+    .map(n => { const a = new Audio(`${SFX_BASE}${n}.mp3`); a.preload = 'auto'; return a; });
+
+  function playSound(pool) {
+    const snd = pool[Math.floor(Math.random() * pool.length)];
+    snd.currentTime = 0;
+    snd.play().catch(() => {});
+  }
 
   // ── Game state ────────────────────────────────────────────────────────────
   let state        = 'idle';
-  let gameMode     = 'time';    // 'time' | 'endless'
-  let gameTheme    = 'letters'; // 'letters' | 'classic'
+  let gameMode     = 'time';    // 'time' | 'endless' | 'challenge'
   let score        = 0;
   let lives        = MAX_LIVES;
   let items        = [];
   let effects      = [];
   let missFlash    = 0;
-  let nextId       = 0;
   let frameId      = null;
   let spawnTimer   = null;
   let faceDetected = false;
@@ -416,21 +454,23 @@
 
   // ── MediaPipe ─────────────────────────────────────────────────────────────
   let faceLandmarker = null;
+  let faceLandmarkerNumFaces = 0; // numFaces the current instance was created with
+  let numPlayers = 1;
 
   // ── Persistence ───────────────────────────────────────────────────────────
-  const LS_KEY_TIME    = 'fcc-best-time';
-  const LS_KEY_ENDLESS = 'fcc-best-endless';
+  const LS_KEY_TIME      = 'fcc-best-time';
+  const LS_KEY_ENDLESS   = 'fcc-best-endless';
+  const LS_KEY_CHALLENGE = 'fcc-best-challenge';
   let bestScore = 0;
 
-  function loadBest() {
-    const key = gameMode === 'time' ? LS_KEY_TIME : LS_KEY_ENDLESS;
-    bestScore = parseInt(localStorage.getItem(key) ?? '0', 10);
+  function lsKey() {
+    if (gameMode === 'endless')   return LS_KEY_ENDLESS;
+    if (gameMode === 'challenge') return LS_KEY_CHALLENGE;
+    return LS_KEY_TIME;
   }
 
-  function saveBest() {
-    const key = gameMode === 'time' ? LS_KEY_TIME : LS_KEY_ENDLESS;
-    localStorage.setItem(key, String(bestScore));
-  }
+  function loadBest() { bestScore = parseInt(localStorage.getItem(lsKey()) ?? '0', 10); }
+  function saveBest() { localStorage.setItem(lsKey(), String(bestScore)); }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -448,9 +488,9 @@
   function updateHud() {
     scoreEl.textContent = String(score);
     bestEl.textContent  = String(bestScore);
-    livesEl.textContent = gameMode === 'time'
-      ? '—'
-      : '❤️'.repeat(lives) + '🖤'.repeat(MAX_LIVES - lives);
+    livesEl.textContent = gameMode === 'endless'
+      ? '❤️'.repeat(lives) + '🖤'.repeat(MAX_LIVES - lives)
+      : '—';
   }
 
   function itemSpeed() {
@@ -463,7 +503,7 @@
   }
 
   function drawTimerOverlay() {
-    if (gameMode !== 'time') return;
+    if (gameMode === 'endless') return;
     const secs = Math.ceil(timeLeft);
     ctx.save();
     ctx.fillStyle    = secs <= 10 ? '#ff5252' : 'rgba(255,255,255,0.85)';
@@ -490,10 +530,11 @@
         delegate: 'GPU',
       },
       runningMode: 'VIDEO',
-      numFaces: 2,
+      numFaces: numPlayers,
       outputFaceBlendshapes: false,
       outputFacialTransformationMatrixes: false,
     });
+    faceLandmarkerNumFaces = numPlayers;
   }
 
   // ── Camera init ───────────────────────────────────────────────────────────
@@ -546,14 +587,13 @@
     }
     const roll = Math.random();
     const type = roll < BONUS_CHANCE ? 'bonus' : roll < BONUS_CHANCE + BAD_CHANCE ? 'bad' : 'good';
+    const badPool = gameMode === 'challenge' ? CHALLENGE_BAD_POOL : BAD_POOL;
     const label = type === 'bonus'
       ? 'ABC'
-      : gameTheme === 'letters'
-        ? (type === 'good'
-            ? CAPITAL_LETTERS[Math.floor(Math.random() * CAPITAL_LETTERS.length)]
-            : BAD_POOL[Math.floor(Math.random() * BAD_POOL.length)])
-        : null;
-    items.push({ id: nextId++, startX, startY, endX, endY, progress: 0, speed: itemSpeed(), type, label });
+      : type === 'good'
+        ? CAPITAL_LETTERS[Math.floor(Math.random() * CAPITAL_LETTERS.length)]
+        : badPool[Math.floor(Math.random() * badPool.length)];
+    items.push({ startX, startY, endX, endY, progress: 0, speed: itemSpeed(), type, label });
   }
 
   function startSpawning() {
@@ -626,7 +666,6 @@
     ctx.save();
 
     if (item.type === 'bonus') {
-      // White circle with gold glow — same in both themes
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fillStyle   = '#ffffff';
@@ -639,7 +678,7 @@
       ctx.textAlign    = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('ABC', x, y + 1);
-    } else if (gameTheme === 'letters') {
+    } else {
       // All circles are yellow — content tells good from bad
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -649,47 +688,17 @@
       ctx.fill();
       ctx.shadowBlur = 0;
       if (item.type === 'good') {
-        // Capital letter — Georgia for proper serif serifs (I has crossbars, etc.)
         ctx.fillStyle    = '#1a1a1a';
         ctx.font         = `bold ${Math.round(r * 1.3)}px Georgia, 'Times New Roman', serif`;
         ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(item.label, x, y + 1);
       } else {
-        // Emoji
+        ctx.fillStyle    = '#1a1a1a';
         ctx.font         = `${Math.round(r * 1.05)}px sans-serif`;
         ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(item.label, x, y + 2);
-      }
-    } else {
-      // Classic theme — blue good, red bad
-      if (item.type === 'good') {
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle   = '#3b82f6';
-        ctx.shadowColor = 'rgba(59,130,246,0.55)';
-        ctx.shadowBlur  = 14;
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-        ctx.lineWidth   = 2;
-        ctx.stroke();
-      } else {
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle   = '#ef4444';
-        ctx.shadowColor = 'rgba(239,68,68,0.55)';
-        ctx.shadowBlur  = 14;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        const arm = r * 0.52;
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth   = Math.max(1.5, r * 0.2);
-        ctx.lineCap     = 'round';
-        ctx.beginPath();
-        ctx.moveTo(x - arm, y - arm); ctx.lineTo(x + arm, y + arm);
-        ctx.moveTo(x + arm, y - arm); ctx.lineTo(x - arm, y + arm);
-        ctx.stroke();
       }
     }
 
@@ -780,18 +789,21 @@
         if (hit) {
           score += 5;
           effects.push({ x, y: y - 10, text: '+5', color: '#ffd700', life: 42, maxLife: 42, dy: 1.8, fontSize: 26 });
+          playSound(GOOD_SFX);
           updateHud();
         }
       } else if (item.type === 'good') {
         if (hit) {
           score += 10;
           effects.push({ x, y: y - 10, text: '+10', color: '#69f0ae', life: 42, maxLife: 42, dy: 1.8 });
+          playSound(GOOD_SFX);
           updateHud();
         }
       } else {
         // bad item
         if (hit) {
-          if (gameMode === 'time') {
+          playSound(BAD_SFX);
+          if (gameMode !== 'endless') {
             score = Math.max(0, score - 1);
             effects.push({ x, y, text: '-1', color: '#ff5252', life: 35, maxLife: 35, dy: 1.5, fontSize: 18 });
             missFlash = 12;
@@ -808,7 +820,7 @@
     }
 
     // 6. Time mode: check timer
-    if (gameMode === 'time') {
+    if (gameMode !== 'endless') {
       timeLeft = TIME_LIMIT - (performance.now() - gameStartTime) / 1000;
       if (timeLeft <= 0) { timeLeft = 0; endGame(); return; }
     }
@@ -835,7 +847,7 @@
     if (frameId) { cancelAnimationFrame(frameId); frameId = null; }
     if (score > bestScore) { bestScore = score; saveBest(); }
     document.querySelector('.gameover-label').textContent =
-      gameMode === 'time' ? 'Time Up! / 終了！' : 'Game Over';
+      gameMode === 'endless' ? 'Game Over' : 'Time Up! / 終了！';
     finalScoreEl.textContent   = String(score);
     gameoverBestEl.textContent = score >= bestScore && score > 0 ? 'New Best!' : `Best: ${bestScore}`;
     showScreen('gameover');
@@ -854,7 +866,11 @@
 
     try {
       if (!video.srcObject) await initCamera();
-      if (!faceLandmarker)  await initMediaPipe();
+      if (faceLandmarker && faceLandmarkerNumFaces !== numPlayers) {
+        faceLandmarker.close();
+        faceLandmarker = null;
+      }
+      if (!faceLandmarker) await initMediaPipe();
     } catch (err) {
       loadMsgEl.textContent = `Error: ${err.message}`;
       return;
@@ -885,22 +901,26 @@
   }
 
   // ── Button listeners ──────────────────────────────────────────────────────
-  btnTime.addEventListener('click',    () => startGame('time'));
-  btnEndless.addEventListener('click', () => startGame('endless'));
+  btnTime.addEventListener('click',      () => startGame('time'));
+  btnEndless.addEventListener('click',   () => startGame('endless'));
+  btnChallenge.addEventListener('click', () => startGame('challenge'));
   btnRestart.addEventListener('click', restartGame);
 
-  // Theme selection
-  const themeDescEl = document.getElementById('fcc-theme-desc');
-  const THEME_DESCS = {
-    letters: 'Catch the letters! Dodge the emojis! / 文字をキャッチ！絵文字を避けて！',
-    classic: 'Catch the blue circles! Dodge the red X! / 青をキャッチ！赤を避けて！',
+  // ── Player count selection ────────────────────────────────────────────────
+  const playerWarnEl = document.getElementById('fcc-player-warn');
+  const PLAYER_WARNINGS = {
+    1: '',
+    2: '',
+    3: 'May be slow on older computers. / 古いパソコンでは遅くなる場合があります。',
+    4: 'May be slow on older computers. / 古いパソコンでは遅くなる場合があります。',
+    5: 'May run slowly on most computers. / ほとんどのパソコンで動作が遅くなる場合があります。',
   };
-  document.querySelectorAll('.theme-btn').forEach((btn) => {
+  document.querySelectorAll('#fcc-player-btns .theme-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      gameTheme = btn.dataset.theme;
-      document.querySelectorAll('.theme-btn').forEach((b) => b.classList.remove('active'));
+      numPlayers = parseInt(btn.dataset.players, 10);
+      document.querySelectorAll('#fcc-player-btns .theme-btn').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
-      themeDescEl.textContent = THEME_DESCS[gameTheme];
+      playerWarnEl.textContent = PLAYER_WARNINGS[numPlayers];
     });
   });
 

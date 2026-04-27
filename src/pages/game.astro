@@ -146,19 +146,8 @@ import T from '../components/T.astro';
 
           <!-- Face Catch Game Card -->
           <a href="/face-catch-game" class="game-card">
-              <div class="card-image facecatch-bg">
-                  <div class="icon" aria-hidden="true">
-                    <svg viewBox="0 0 120 120" role="img" focusable="false">
-                      <circle cx="60" cy="76" r="26" fill="#fde68a" stroke="#92400e" stroke-width="4"/>
-                      <circle cx="51" cy="72" r="3.5" fill="#92400e"/>
-                      <circle cx="69" cy="72" r="3.5" fill="#92400e"/>
-                      <path d="M51 82 q9 7 18 0" fill="none" stroke="#92400e" stroke-width="3.5" stroke-linecap="round"/>
-                      <path d="M38 50 l3 20 h38 l3-20z" fill="#f97316" stroke="#c2410c" stroke-width="3.5" stroke-linejoin="round"/>
-                      <rect x="34" y="43" width="52" height="9" rx="4" fill="#facc15" stroke="#c2410c" stroke-width="3.5"/>
-                      <circle cx="60" cy="22" r="10" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2.5"/>
-                      <text x="60" y="27" text-anchor="middle" font-size="14" font-weight="800" fill="white">A</text>
-                    </svg>
-                  </div>
+              <div class="card-image card-image--screenshot">
+                  <img src="/images/game-screenshots/face-catch-game.png" alt="Face Catch Game screenshot" loading="lazy" />
               </div>
               <div class="card-content">
                   <h3>
@@ -169,8 +158,8 @@ import T from '../components/T.astro';
                   </h3>
                   <p>
                     <T>
-                      <span slot="en">Use your face to catch falling letters with a cup on your head!</span>
-                      <span slot="ja">頭のカップで落ちてくる文字をキャッチしよう！</span>
+                      <span slot="en">Use your face to catch letters flying across the screen!</span>
+                      <span slot="ja">顔を動かして画面を飛ぶ文字をキャッチしよう！</span>
                     </T>
                   </p>
                   <span class="play-btn">
@@ -185,22 +174,8 @@ import T from '../components/T.astro';
 
           <!-- Odd One Out Game Card -->
           <a href="/odd-one-out" class="game-card">
-              <div class="card-image odd-one-out-bg">
-                  <div class="icon" aria-hidden="true">
-                    <svg viewBox="0 0 120 120" role="img" focusable="false">
-                      <rect x="8"  y="14" width="46" height="38" rx="9" fill="white" stroke="#557153" stroke-width="3.5"/>
-                      <rect x="66" y="14" width="46" height="38" rx="9" fill="white" stroke="#557153" stroke-width="3.5"/>
-                      <rect x="8"  y="68" width="46" height="38" rx="9" fill="white" stroke="#557153" stroke-width="3.5"/>
-                      <rect x="66" y="68" width="46" height="38" rx="9" fill="#fef9c3" stroke="#d97706" stroke-width="4"/>
-                      <line x1="18" y1="29" x2="44" y2="29" stroke="#94b49f" stroke-width="3" stroke-linecap="round"/>
-                      <line x1="18" y1="39" x2="36" y2="39" stroke="#c5d9c5" stroke-width="2.5" stroke-linecap="round"/>
-                      <line x1="76" y1="29" x2="102" y2="29" stroke="#94b49f" stroke-width="3" stroke-linecap="round"/>
-                      <line x1="76" y1="39" x2="94" y2="39" stroke="#c5d9c5" stroke-width="2.5" stroke-linecap="round"/>
-                      <line x1="18" y1="83" x2="44" y2="83" stroke="#94b49f" stroke-width="3" stroke-linecap="round"/>
-                      <line x1="18" y1="93" x2="36" y2="93" stroke="#c5d9c5" stroke-width="2.5" stroke-linecap="round"/>
-                      <text x="89" y="100" text-anchor="middle" font-size="26" font-weight="800" fill="#d97706" font-family="sans-serif">?</text>
-                    </svg>
-                  </div>
+              <div class="card-image card-image--screenshot">
+                  <img src="/images/game-screenshots/odd-one-out.png" alt="Odd One Out Game screenshot" loading="lazy" />
               </div>
               <div class="card-content">
                   <h3>
@@ -563,18 +538,6 @@ import T from '../components/T.astro';
     background: #d8f4e3;
   }
 
-  .map-bg {
-    background: #cfe8ff;
-  }
-
-  .letter-bg {
-    background: #e4dbff;
-  }
-
-  .reaction-bg {
-    background: #d8f0dd;
-  }
-
   .points-bg {
     background: #ffe8cf;
   }
@@ -589,14 +552,6 @@ import T from '../components/T.astro';
 
   .quizlet-bg {
     background: #dbeafe;
-  }
-
-  .facecatch-bg {
-    background: linear-gradient(135deg, #1a1a2e 0%, #6c63ff 100%);
-  }
-
-  .odd-one-out-bg {
-    background: #fffbeb;
   }
 
   .icon {
