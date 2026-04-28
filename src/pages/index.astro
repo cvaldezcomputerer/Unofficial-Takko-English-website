@@ -27,28 +27,6 @@ const word = dialectWords[dayIndex];
 
         <!-- Hero -->
         <header class="hero">
-            <!-- Word of the Day -->
-            <div class="wod-float">
-                <div class="wod-float-header">
-                    <span class="wod-float-title">Takko local dialect word of the day</span>
-                </div>
-                <div class="wod-float-body">
-                    <div class="wod-float-dialect">
-                        <T>
-                            <span slot="en">{word.romanji}</span>
-                            <span slot="ja">{word.dialect}</span>
-                        </T>
-                    </div>
-                    <div class="wod-float-sep">→</div>
-                    <div class="wod-float-standard">
-                        <T>
-                            <span slot="en">{word.english}</span>
-                            <span slot="ja">{word.standard}</span>
-                        </T>
-                    </div>
-                </div>
-            </div>
-
             <div class="hero-content">
                 <span class="welcome-text">
                     <T>
@@ -86,129 +64,157 @@ const word = dialectWords[dayIndex];
             <div class="hero-overlay"></div>
         </header>
 
-        <!-- English Learning -->
-        <section class="site-section">
-            <div class="section-inner">
-                <div class="section-header">
-                    <h2>
-                        <T>
-                            <span slot="en">English Learning</span>
-                            <span slot="ja">英語学習</span>
-                        </T>
-                    </h2>
-                    <p>
-                        <T>
-                            <span slot="en">Games and tools for Takko students and teachers.</span>
-                            <span slot="ja">田子の生徒と先生のためのゲームとツール</span>
-                        </T>
-                    </p>
-                </div>
-                <div class="card-grid">
-                    <a href="/game" class="site-card">
-                        <h3>
+        <div class="page-body">
+            <main class="page-main">
+                <!-- English Learning -->
+                <section class="site-section">
+                    <div class="section-header">
+                        <h2>
                             <T>
-                                <span slot="en">Games and Tools</span>
-                                <span slot="ja">ゲームとツール</span>
+                                <span slot="en">English Learning</span>
+                                <span slot="ja">英語学習</span>
                             </T>
-                        </h3>
+                        </h2>
                         <p>
                             <T>
-                                <span slot="en">Vocabulary games, drawing games, classroom tools, and more.</span>
-                                <span slot="ja">語彙ゲーム、絵描きゲーム、授業ツールなど</span>
+                                <span slot="en">Games and tools for Takko students and teachers.</span>
+                                <span slot="ja">田子の生徒と先生のためのゲームとツール</span>
                             </T>
                         </p>
-                    </a>
-                </div>
-            </div>
-        </section>
+                    </div>
+                    <div class="card-grid">
+                        <a href="/game" class="site-card">
+                            <h3>
+                                <T>
+                                    <span slot="en">Games and Tools</span>
+                                    <span slot="ja">ゲームとツール</span>
+                                </T>
+                            </h3>
+                            <p>
+                                <T>
+                                    <span slot="en">Vocabulary games, drawing games, classroom tools, and more.</span>
+                                    <span slot="ja">語彙ゲーム、絵描きゲーム、授業ツールなど</span>
+                                </T>
+                            </p>
+                        </a>
+                    </div>
+                </section>
 
-        <!-- Town Guide -->
-        <section class="site-section section-alt" id="town-guide">
-            <div class="section-inner">
-                <div class="section-header">
-                    <h2>
-                        <T>
-                            <span slot="en">Town Guide</span>
-                            <span slot="ja">町の案内</span>
-                        </T>
-                    </h2>
-                    <p>
-                        <T>
-                            <span slot="en">An unofficial English guide to Takko Machi.</span>
-                            <span slot="ja">田子町の非公式英語ガイド</span>
-                        </T>
-                    </p>
-                </div>
-                <div class="card-grid">
-                    <a href="/shrines" class="site-card shrine-card-home">
-                        <div class="card-home-torii" aria-hidden="true">
-                            <svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="22" y="28" width="10" height="72" rx="2" fill="currentColor"/>
-                                <rect x="88" y="28" width="10" height="72" rx="2" fill="currentColor"/>
-                                <rect x="18" y="47" width="84" height="8" rx="2" fill="currentColor"/>
-                                <path d="M4,25 L4,17 Q14,3 24,11 L96,11 Q106,3 116,17 L116,25 Z" fill="currentColor"/>
-                                <rect x="18" y="25" width="16" height="5" rx="1" fill="currentColor"/>
-                                <rect x="86" y="25" width="16" height="5" rx="1" fill="currentColor"/>
-                            </svg>
-                        </div>
-                        <h3>
+                <!-- Town Guide -->
+                <section class="site-section section-alt" id="town-guide">
+                    <div class="section-header">
+                        <h2>
                             <T>
-                                <span slot="en">Shrines</span>
-                                <span slot="ja">神社</span>
+                                <span slot="en">Town Guide</span>
+                                <span slot="ja">町の案内</span>
                             </T>
-                        </h3>
+                        </h2>
                         <p>
                             <T>
-                                <span slot="en">Shinto shrines in and around Takko.</span>
-                                <span slot="ja">田子町の神社を紹介します。</span>
-                            </T>
-                        </p>
-                    </a>
-                    <div class="site-card coming-soon">
-                        <h3>
-                            <T>
-                                <span slot="en">Restaurants</span>
-                                <span slot="ja">飲食店</span>
-                            </T>
-                        </h3>
-                        <p class="soon-label">
-                            <T>
-                                <span slot="en">Coming soon</span>
-                                <span slot="ja">準備中</span>
+                                <span slot="en">An unofficial English guide to Takko Machi.</span>
+                                <span slot="ja">田子町の非公式英語ガイド</span>
                             </T>
                         </p>
                     </div>
-                    <div class="site-card coming-soon">
-                        <h3>
+                    <div class="card-grid">
+                        <a href="/shrines" class="site-card shrine-card-home">
+                            <div class="card-home-torii" aria-hidden="true">
+                                <svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="22" y="28" width="10" height="72" rx="2" fill="currentColor"/>
+                                    <rect x="88" y="28" width="10" height="72" rx="2" fill="currentColor"/>
+                                    <rect x="18" y="47" width="84" height="8" rx="2" fill="currentColor"/>
+                                    <path d="M4,25 L4,17 Q14,3 24,11 L96,11 Q106,3 116,17 L116,25 Z" fill="currentColor"/>
+                                    <rect x="18" y="25" width="16" height="5" rx="1" fill="currentColor"/>
+                                    <rect x="86" y="25" width="16" height="5" rx="1" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <h3>
+                                <T>
+                                    <span slot="en">Shrines</span>
+                                    <span slot="ja">神社</span>
+                                </T>
+                            </h3>
+                            <p>
+                                <T>
+                                    <span slot="en">Shinto shrines in and around Takko.</span>
+                                    <span slot="ja">田子町の神社を紹介します。</span>
+                                </T>
+                            </p>
+                        </a>
+                        <div class="site-card coming-soon">
+                            <h3>
+                                <T>
+                                    <span slot="en">Restaurants</span>
+                                    <span slot="ja">飲食店</span>
+                                </T>
+                            </h3>
+                            <p class="soon-label">
+                                <T>
+                                    <span slot="en">Coming soon</span>
+                                    <span slot="ja">準備中</span>
+                                </T>
+                            </p>
+                        </div>
+                        <div class="site-card coming-soon">
+                            <h3>
+                                <T>
+                                    <span slot="en">Events</span>
+                                    <span slot="ja">イベント</span>
+                                </T>
+                            </h3>
+                            <p class="soon-label">
+                                <T>
+                                    <span slot="en">Coming soon</span>
+                                    <span slot="ja">準備中</span>
+                                </T>
+                            </p>
+                        </div>
+                        <div class="site-card coming-soon">
+                            <h3>
+                                <T>
+                                    <span slot="en">Things to Do</span>
+                                    <span slot="ja">観光・体験</span>
+                                </T>
+                            </h3>
+                            <p class="soon-label">
+                                <T>
+                                    <span slot="en">Coming soon</span>
+                                    <span slot="ja">準備中</span>
+                                </T>
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <aside class="page-sidebar">
+                <div class="wod-card">
+                    <div class="wod-card-header">
+                        <p class="wod-card-title">
                             <T>
-                                <span slot="en">Events</span>
-                                <span slot="ja">イベント</span>
-                            </T>
-                        </h3>
-                        <p class="soon-label">
-                            <T>
-                                <span slot="en">Coming soon</span>
-                                <span slot="ja">準備中</span>
+                                <span slot="en">Takko dialect word of the day</span>
+                                <span slot="ja">今日の田子弁</span>
                             </T>
                         </p>
                     </div>
-                    <div class="site-card coming-soon">
-                        <h3>
+                    <div class="wod-card-body">
+                        <div class="wod-dialect">
                             <T>
-                                <span slot="en">Things to Do</span>
-                                <span slot="ja">観光・体験</span>
+                                <span slot="en">{word.romanji}</span>
+                                <span slot="ja">{word.dialect}</span>
                             </T>
-                        </h3>
-                        <p class="soon-label">
+                        </div>
+                        <div class="wod-sep">→</div>
+                        <div class="wod-standard">
                             <T>
-                                <span slot="en">Coming soon</span>
-                                <span slot="ja">準備中</span>
+                                <span slot="en">{word.english}</span>
+                                <span slot="ja">{word.standard}</span>
                             </T>
-                        </p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </aside>
+        </div>
 
     </div>
 </Layout>
@@ -222,16 +228,17 @@ const word = dialectWords[dayIndex];
         --font-main: 'Fredoka', sans-serif;
         --font-hand: 'Patrick Hand', cursive;
 
-        background-color: var(--color-bg);
+        background-color: #fff;
         font-family: var(--font-main);
         color: #333;
+        border-bottom: 8px solid var(--color-primary);
     }
 
     h1, h2, h3 { font-family: var(--font-main); }
 
     /* Hero */
     .hero {
-        height: 70vh;
+        height: 52vh;
         background-image: url('/images/yo2.jpg');
         background-size: cover;
         background-position: center;
@@ -257,27 +264,27 @@ const word = dialectWords[dayIndex];
 
     .welcome-text {
         font-family: var(--font-hand);
-        font-size: 2rem;
+        font-size: 1.4rem;
         display: block;
-        margin-bottom: -1rem;
+        margin-bottom: -0.5rem;
         color: #f1f8e9;
     }
 
     .town-name {
-        font-size: 6rem;
+        font-size: 4.5rem;
         margin: 0;
-        text-shadow: 4px 4px 0px var(--color-primary);
+        text-shadow: 3px 3px 0px var(--color-primary);
     }
 
     .tagline {
-        font-size: 1.5rem;
-        margin-bottom: 2rem;
+        font-size: 1.2rem;
+        margin-bottom: 1.5rem;
         opacity: 0.9;
     }
 
     .hero-ctas {
         display: flex;
-        gap: 1rem;
+        gap: 0.75rem;
         justify-content: center;
         flex-wrap: wrap;
     }
@@ -286,12 +293,12 @@ const word = dialectWords[dayIndex];
         display: inline-block;
         background: var(--color-accent);
         color: white;
-        padding: 1rem 2rem;
+        padding: 0.75rem 1.75rem;
         border-radius: 50px;
         text-decoration: none;
         font-weight: bold;
         transition: transform 0.2s;
-        box-shadow: 0 4px 0px #c05035;
+        box-shadow: 0 3px 0px #c05035;
     }
 
     .cta-button.cta-secondary {
@@ -315,41 +322,62 @@ const word = dialectWords[dayIndex];
         animation: bob 2.4s ease-in-out infinite;
     }
 
-    /* Sections */
+    /* ── Page layout ── */
+    .page-body {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 0;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .page-main {
+        background: var(--color-bg);
+        padding: 3rem 3rem 4rem 2rem;
+    }
+
+    .page-sidebar {
+        padding: 3rem 1rem 4rem 1rem;
+    }
+
+    /* ── Sections ── */
     .site-section {
-        padding: 5rem 2rem;
+        padding-bottom: 3rem;
+    }
+
+    .site-section + .site-section {
+        padding-top: 3rem;
     }
 
     .section-alt {
-        background: #f0f7f2;
-        border-top: 4px solid var(--color-primary);
-    }
-
-    .section-inner {
-        max-width: 1100px;
-        margin: 0 auto;
+        border-top: 3px solid var(--color-primary);
     }
 
     .section-header {
-        text-align: center;
-        margin-bottom: 3rem;
+        text-align: left;
+        margin-bottom: 2rem;
     }
 
     .section-header h2 {
-        font-size: 2.5rem;
+        font-size: 2rem;
         color: var(--color-primary);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 3px solid var(--color-accent);
+        display: inline-block;
     }
 
     .section-header p {
-        font-size: 1.1rem;
-        color: #555;
+        font-size: 1rem;
+        color: #666;
     }
 
-    /* Cards */
+    /* ── Cards ── */
     .card-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1.5rem;
     }
 
@@ -406,99 +434,107 @@ const word = dialectWords[dayIndex];
         height: 100%;
     }
 
-    @media (max-width: 768px) {
-        .town-name { font-size: 3.5rem; }
-        .hero-ctas { flex-direction: column; align-items: center; }
-    }
-
-    /* ── Word of the Day: Floating card ── */
-    .wod-float {
-        position: absolute;
-        bottom: 2.5rem;
-        left: 2.5rem;
-        z-index: 3;
-        width: 250px;
-        border-radius: 6px;
+    /* ── Word of the Day card ── */
+    .wod-card {
+        position: sticky;
+        top: 1.5rem;
+        width: 100%;
+        border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        border: 4px double var(--color-secondary);
-        outline: 2px solid var(--color-primary);
+        border: 3px solid var(--color-secondary);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         font-family: var(--font-main);
     }
 
-    .wod-float-header {
+    .wod-card-header {
         background: var(--color-primary);
-        padding: 0 1.5rem;
-        height: 90px;
-        display: flex;
-        align-items: center;
+        padding: 0.85rem 1.25rem;
     }
 
-    .wod-float-title {
+    .wod-card-title {
+        margin: 0;
         color: white;
-        font-size: 1.15rem;
+        font-size: 0.95rem;
         font-weight: 600;
-        display: block;
-    }
-
-    .wod-float-body {
-        background: #fffbf0;
-        padding: 1.25rem 1.5rem 1.5rem;
         text-align: center;
+        line-height: 1.4;
     }
 
-    .wod-float-dialect {
-        display: inline-block;
-        font-size: 2.8rem;
+    .wod-card-body {
+        background: #fffbf0;
+        padding: 1rem 1rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.4rem;
+    }
+
+    .wod-dialect {
+        font-size: 2.2rem;
         font-weight: 600;
         color: var(--color-accent);
-        line-height: 1;
+        line-height: 1.2;
         background: #fde8e2;
         border: 1px solid #f0b8a8;
         padding: 0.2rem 0.75rem;
         border-radius: 4px;
+        text-align: center;
+        max-width: 100%;
+        word-break: break-word;
     }
 
-    .wod-float-sep {
-        font-size: 1.25rem;
+    .wod-sep {
+        font-size: 1.1rem;
         color: #bbb;
-        margin: 0.3rem 0;
+        text-align: center;
     }
 
-    .wod-float-standard {
-        display: inline-block;
-        font-size: 2.2rem;
+    .wod-standard {
+        font-size: 1.5rem;
         font-weight: 600;
         color: var(--color-primary);
-        line-height: 1;
+        line-height: 1.3;
         background: #e4f0e8;
         border: 1px solid #a8cdb5;
         padding: 0.2rem 0.75rem;
         border-radius: 4px;
+        text-align: center;
+        max-width: 100%;
+        word-break: break-word;
     }
 
-    .wod-float-english {
-        font-size: 0.9rem;
-        font-family: var(--font-hand);
-        color: #888;
-        margin-top: 0.5rem;
-    }
-
-    .wod-float-dialect :global(.t-ja),
-    .wod-float-standard :global(.t-ja) {
-        white-space: nowrap;
-    }
-
-    :global(body.lang-ja) .wod-float {
-        width: fit-content;
-    }
-
-    @media (max-width: 520px) {
-        .wod-float {
-            bottom: 1rem;
-            left: 1rem;
-            width: calc(100% - 2rem);
+    @media (max-width: 900px) {
+        .page-body {
+            grid-template-columns: 1fr;
         }
+        .page-main {
+            padding: 2.5rem 1.5rem 3rem;
+        }
+        .page-sidebar {
+            order: -1;
+            padding: 2rem 1.5rem;
+        }
+        .wod-card {
+            position: static;
+            max-width: 340px;
+            margin: 0 auto;
+        }
+        .section-header {
+            text-align: center;
+        }
+        .section-header h2 {
+            display: block;
+            border-bottom: none;
+            border-left: 4px solid var(--color-accent);
+            padding-bottom: 0;
+            padding-left: 0.6rem;
+            text-align: left;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .town-name { font-size: 2.8rem; }
+        .hero-ctas { flex-direction: column; align-items: center; }
     }
 
 

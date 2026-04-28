@@ -820,9 +820,9 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
      4. Utils & Storage
      ========================================= */
   function emotionNameFromUrl(url) {
-    const filename = url.split('/').pop();
+    const filename = url.split('/').pop().split('?')[0];
     const name = filename
-      .replace(/\.[a-f0-9]{8,}\.[a-z]+$/i, '')
+      .replace(/\.[a-z0-9]{8,}\.[a-z]+$/i, '')
       .replace(/\.[a-z]+$/i, '')
       .replace(/[-_]/g, ' ');
     return name.charAt(0).toUpperCase() + name.slice(1);
