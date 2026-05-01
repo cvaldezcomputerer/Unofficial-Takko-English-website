@@ -39,7 +39,6 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
   <!-- Game Screen -->
   <div id="screen-game" class="screen hidden">
     <div class="game-header">
-      <button class="back-btn" id="back-btn">← Back ／ もどる</button>
       <span class="game-category-label" id="game-category-label"></span>
       <div class="header-toggles">
         <label class="mode-toggle">
@@ -52,11 +51,16 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
           <span class="toggle-track"></span>
           <span class="toggle-label">HELPER <span class="toggle-ja">ヒント</span></span>
         </label>
+        <label class="mode-toggle">
+          <input type="checkbox" id="flip-cb" />
+          <span class="toggle-track"></span>
+          <span class="toggle-label">FLIP <span class="toggle-ja">ぎゃく</span></span>
+        </label>
       </div>
     </div>
     <div class="game-prompt">
-      <p class="prompt-en">Which word doesn't belong?</p>
-      <p class="prompt-ja">なかまはずれはどれ？</p>
+      <p class="prompt-en" id="prompt-en">Which word doesn't belong?</p>
+      <p class="prompt-ja" id="prompt-ja">なかまはずれはどれ？</p>
     </div>
     <div class="word-grid" id="word-grid"></div>
     <div class="game-bottom">
@@ -80,7 +84,6 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
   const screenSelect      = document.getElementById('screen-select')!;
   const screenGame        = document.getElementById('screen-game')!;
   const categoryGrid      = document.getElementById('category-grid')!;
-  const backBtn           = document.getElementById('back-btn')!;
   const wordGrid          = document.getElementById('word-grid')!;
   const feedbackArea      = document.getElementById('feedback-area')!;
   const revealBtn         = document.getElementById('reveal-btn') as HTMLButtonElement;
@@ -88,6 +91,9 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
   const gameCategoryLabel = document.getElementById('game-category-label')!;
   const omojiCb           = document.getElementById('omoji-cb') as HTMLInputElement;
   const helperCb          = document.getElementById('helper-cb') as HTMLInputElement;
+  const flipCb            = document.getElementById('flip-cb') as HTMLInputElement;
+  const promptEn          = document.getElementById('prompt-en')!;
+  const promptJa          = document.getElementById('prompt-ja')!;
   let   helperInterval: number | null = null;
 
   let activeGroupIdx   = -1;
@@ -138,30 +144,58 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
     return null;
   }
 
+  function pickNoiseWords(count: number): QuizWord[] {
+    const pool: QuizWord[] = [];
+    categoryGroups.forEach((group, i) => {
+      if (i === activeGroupIdx) return;
+      group.categories.forEach(groupCat => {
+        const cat = categories.find(c => c.name === groupCat.name);
+        if (cat) pool.push(...cat.words);
+      });
+    });
+    return shuffle(pool).slice(0, count);
+  }
+
   function startGame(): void {
     const pool: QuizWord[] = [];
     selectedCatNames.forEach(name => {
       const cat = categories.find(c => c.name === name);
       if (cat) pool.push(...cat.words);
     });
+    if (pool.length === 0) return;
 
-    const mainWords = shuffle(pool).slice(0, 8);
-    const impostor  = pickImpostor();
-    if (!impostor || mainWords.length === 0) return;
+    const group = categoryGroups[activeGroupIdx];
+    let tagged: { en: string; isImpostor: boolean }[];
 
-    const tagged = [
-      ...mainWords.map(w => ({ en: w.en, isImpostor: false })),
-      { en: impostor.en, isImpostor: true },
-    ];
+    if (flipCb.checked) {
+      const target = pool[Math.floor(Math.random() * pool.length)];
+      const noise  = pickNoiseWords(7);
+      if (noise.length === 0) return;
+      tagged = [
+        ...noise.map(w => ({ en: w.en, isImpostor: false })),
+        { en: target.en, isImpostor: true },
+      ];
+      promptEn.textContent = `Find the ${group.label} word!`;
+      promptJa.textContent = `${group.ja}のことばはどれ？`;
+    } else {
+      const mainWords = shuffle(pool).slice(0, 7);
+      const impostor  = pickImpostor();
+      if (!impostor || mainWords.length === 0) return;
+      tagged = [
+        ...mainWords.map(w => ({ en: w.en, isImpostor: false })),
+        { en: impostor.en, isImpostor: true },
+      ];
+      promptEn.textContent = "Which word doesn't belong?";
+      promptJa.textContent = 'なかまはずれはどれ？';
+    }
+
     const shuffled = shuffle(tagged);
-
     currentRound = {
       words:       shuffled,
       impostorIdx: shuffled.findIndex(w => w.isImpostor),
     };
     gameState = 'idle';
 
-    const group = categoryGroups[activeGroupIdx];
     gameCategoryLabel.innerHTML =
       `<span class="label-en">${group.label}</span><span class="label-sep">／</span><span class="label-ja">${group.ja}</span>`;
 
@@ -229,7 +263,9 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
     } else {
       cards[idx].classList.add('card-safe');
       cards[idx].disabled = true;
-      feedbackArea.innerHTML = '<span class="fb-en">That one belongs!</span><span class="fb-ja">それはなかまだよ！</span>';
+      feedbackArea.innerHTML = flipCb.checked
+        ? '<span class="fb-en">Not that one!</span><span class="fb-ja">それじゃないよ！</span>'
+        : '<span class="fb-en">That one belongs!</span><span class="fb-ja">それはなかまだよ！</span>';
       feedbackArea.className = 'feedback-area feedback-safe';
     }
   }
@@ -252,7 +288,6 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
   });
 
   nextBtn.addEventListener('click', startGame);
-  backBtn.addEventListener('click', () => { stopHelper(); showScreen('screen-select'); });
 </script>
 
 <style>
@@ -324,22 +359,7 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
     flex-wrap: wrap;
   }
 
-  .back-btn {
-    background: none;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 0.4rem 0.8rem;
-    cursor: pointer;
-    font-family: inherit;
-    color: #666;
-    white-space: nowrap;
-    flex-shrink: 0;
-    transition: border-color 0.15s;
-  }
-
-  .back-btn:hover { border-color: #aaa; color: #333; }
-
-  .game-category-label {
+.game-category-label {
     font-size: 1.1rem;
     font-weight: 700;
     color: #555;

@@ -56,7 +56,7 @@ export function openModal(group: CategoryGroup, allCategories: QuizCategory[]): 
     const cb = document.createElement('input');
     cb.type    = 'checkbox';
     cb.value   = groupCat.name;
-    cb.checked = true;
+    cb.checked = false;
     cb.addEventListener('change', syncSelectAll);
 
     const info = document.createElement('span');
@@ -132,7 +132,7 @@ export function openModal(group: CategoryGroup, allCategories: QuizCategory[]): 
     modalSubcats.appendChild(wrapper);
   });
 
-  selectAllCb.checked       = true;
+  selectAllCb.checked       = false;
   selectAllCb.indeterminate = false;
   updateGoBtn();
 
