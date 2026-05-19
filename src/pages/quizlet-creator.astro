@@ -46,7 +46,10 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
     <div class="output-card">
       <div class="output-top">
         <h2 class="output-title">Your Set ／ セット完成</h2>
-        <button class="copy-btn" id="copy-btn">Copy ／ コピー</button>
+        <div class="output-actions">
+          <button class="caps-btn" id="caps-btn">Capitalize ／ 大文字</button>
+          <button class="copy-btn" id="copy-btn">Copy ／ コピー</button>
+        </div>
       </div>
       <textarea class="output-area" id="output-area" readonly spellcheck="false"></textarea>
     </div>
@@ -65,10 +68,11 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
       <div class="instr-block">
         <h3 class="instr-title">Blooket</h3>
         <ol class="instr-list">
-          <li>Import to Quizlet first, then make the set <strong>public</strong></li>
-          <li>Go to <strong>blooket.com</strong> → Create → New Set</li>
-          <li>Click <strong>Import from Quizlet</strong></li>
-          <li>Paste the Quizlet set URL</li>
+          <li>Go to <strong>blooket.com</strong> → Create Set</li>
+          <li>Select <strong>Import from Blooket</strong></li>
+          <li>Press <strong>Next</strong></li>
+          <li>Press <strong>Next</strong></li>
+          <li>Paste in the values above</li>
         </ol>
       </div>
     </div>
@@ -90,10 +94,21 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
   const outputArea   = document.getElementById('output-area') as HTMLTextAreaElement;
   const wordCount    = document.getElementById('word-count')!;
   const copyBtn      = document.getElementById('copy-btn') as HTMLButtonElement;
+  const capsBtn      = document.getElementById('caps-btn') as HTMLButtonElement;
+
+  let currentWords: QuizWord[] = [];
+  let capsOn = false;
 
   function showScreen(id: string): void {
     [screenSelect, screenOutput].forEach(s => s.classList.add('hidden'));
     document.getElementById(id)!.classList.remove('hidden');
+  }
+
+  function buildOutput(): string {
+    return currentWords.map(w => {
+      const en = capsOn ? w.en.toUpperCase() : w.en;
+      return `${en}\t${formatJapanese(w)}`;
+    }).join('\n');
   }
 
   buildCategoryGrid(categoryGrid, categoryGroups, (group) => {
@@ -107,12 +122,23 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
   });
 
   function showSet(words: QuizWord[]): void {
-    outputArea.value = words.map(w => `${w.en}\t${formatJapanese(w)}`).join('\n');
+    currentWords = words;
+    capsOn = false;
+    capsBtn.textContent = 'Capitalize ／ 大文字';
+    capsBtn.classList.remove('active');
+    outputArea.value = buildOutput();
     wordCount.textContent = `${words.length} words ／ ${words.length} たんご`;
     showScreen('screen-output');
   }
 
   backBtn.addEventListener('click', () => showScreen('screen-select'));
+
+  capsBtn.addEventListener('click', () => {
+    capsOn = !capsOn;
+    capsBtn.textContent = capsOn ? 'lowercase ／ 小文字' : 'Capitalize ／ 大文字';
+    capsBtn.classList.toggle('active', capsOn);
+    outputArea.value = buildOutput();
+  });
 
   copyBtn.addEventListener('click', () => {
     navigator.clipboard.writeText(outputArea.value).then(() => {
@@ -194,8 +220,142 @@ import WordSelectorModal from '../components/WordSelectorModal.astro';
     gap: 0.4rem;
   }
 
+  /* Output screen */
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .back-btn {
+    background: none;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+    color: #666;
+  }
+
+  .back-btn:hover { border-color: #aaa; }
+
+  .word-count {
+    font-size: 0.9rem;
+    color: #888;
+  }
+
+  .output-card {
+    background: white;
+    border: 2px solid #bfdbfe;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .output-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .output-title {
+    font-size: 1.2rem;
+    color: #2563eb;
+    margin: 0;
+  }
+
+  .output-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .caps-btn {
+    background: white;
+    border: 2px solid #2563eb;
+    color: #2563eb;
+    border-radius: 50px;
+    padding: 0.45rem 1rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .caps-btn:hover { background: #eff6ff; }
+
+  .caps-btn.active {
+    background: #2563eb;
+    color: white;
+  }
+
+  .copy-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.45rem 1.2rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .copy-btn:hover { background: #1d4ed8; }
+  .copy-btn.copied { background: #16a34a; }
+
+  .output-area {
+    width: 100%;
+    min-height: 380px;
+    font-size: 0.95rem;
+    font-family: 'M PLUS Rounded 1c', monospace;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+    resize: vertical;
+    box-sizing: border-box;
+    line-height: 1.7;
+    color: #333;
+    background: #f8fafc;
+  }
+
+  /* Instructions */
+  .instructions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .instr-block {
+    background: white;
+    border: 2px solid #bfdbfe;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .instr-title {
+    font-size: 1.05rem;
+    color: #2563eb;
+    margin: 0 0 0.75rem;
+    font-weight: 700;
+  }
+
+  .instr-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    color: #444;
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+
   @media (max-width: 600px) {
     .page-title { font-size: 1.6rem; }
     .category-grid { grid-template-columns: 1fr; }
+    .instructions { grid-template-columns: 1fr; }
+    .output-area { min-height: 260px; }
   }
 </style>
