@@ -1,19 +1,166 @@
 ---
+export const prerender = false;
+
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import T from '../components/T.astro';
 
-const dialectWords = [
-    {
-        dialect: "あいきた",
-        romanji:  "aikita",
-        standard: "よしきた・ほいきた",
-        english:  "alright, got it, sure thing",
-    },
-];
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2r7rHiUTy7tfJNkVnajXQuXoELP_27frVBYS-S0EsXzQBI71VQcWbGmb9n8-J023R_Ldso-XJg5JY/pub?output=csv';
 
-const dayIndex = new Date().getDate() % dialectWords.length;
-const word = dialectWords[dayIndex];
+const FALLBACK = {
+    dialect: 'あいきた',
+    romaji:  'aikita',
+    standard: 'よしきた・ほいきた',
+    english:  'alright, got it, sure thing',
+};
+
+function splitCSVLine(line: string): string[] {
+    const values: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (const char of line) {
+        if (char === '"')            inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) { values.push(current); current = ''; }
+        else                         current += char;
+    }
+    values.push(current);
+    return values.map(v => v.trim().replace(/^"|"$/g, ''));
+}
+
+function parseCSV(text: string) {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+    const headers = splitCSVLine(lines[0]).map(h => h.toLowerCase());
+    return lines.slice(1)
+        .map(line => Object.fromEntries(headers.map((h, i) => [h, splitCSVLine(line)[i] ?? ''])))
+        .filter(row => Object.values(row).some(v => v));
+}
+
+function pick(row: Record<string, string>, ...keys: string[]): string {
+    for (const key of keys) {
+        const found = Object.keys(row).find(k => k.includes(key));
+        if (found && row[found]) return row[found];
+    }
+    return '';
+}
+
+let word = FALLBACK;
+let allWords: typeof FALLBACK[] = [FALLBACK];
+
+try {
+    const res = await fetch(SHEET_CSV_URL);
+    if (res.ok) {
+        const rows = parseCSV(await res.text());
+        if (rows.length > 0) {
+            const now = new Date();
+            const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86_400_000);
+            const row = rows[dayOfYear % rows.length];
+            word = {
+                dialect:  pick(row, 'dialect_kana'),
+                romaji:   pick(row, 'dialect_romaji'),
+                standard: pick(row, 'standard_japanese'),
+                english:  pick(row, 'english'),
+            };
+            allWords = rows.map(r => ({
+                dialect:  pick(r, 'dialect_kana'),
+                romaji:   pick(r, 'dialect_romaji'),
+                standard: pick(r, 'standard_japanese'),
+                english:  pick(r, 'english'),
+            })).filter(w => w.dialect || w.romaji);
+        }
+    }
+} catch (_) { /* use fallback */ }
+
+// ── Weather ──
+const WEATHER_API = 'https://api.open-meteo.com/v1/forecast?latitude=40.32&longitude=141.20&current=temperature_2m,weathercode,apparent_temperature&timezone=Asia/Tokyo';
+
+const WMO: Record<number, { en: string; ja: string; icon: string }> = {
+    0:  { en: "It's Sunny!",           ja: '快晴です！',       icon: 'sun' },
+    1:  { en: "It's Sunny!",           ja: '晴れです！',       icon: 'sun' },
+    2:  { en: "It's Partly Cloudy",    ja: '少し曇っています', icon: 'partly-cloudy' },
+    3:  { en: "It's Cloudy",           ja: '曇っています',     icon: 'cloud' },
+    45: { en: "It's Foggy",            ja: '霧です',           icon: 'fog' },
+    48: { en: "It's Foggy",            ja: '霧です',           icon: 'fog' },
+    51: { en: "It's Drizzling",        ja: '霧雨です',         icon: 'rain' },
+    53: { en: "It's Drizzling",        ja: '霧雨です',         icon: 'rain' },
+    55: { en: "It's Drizzling Hard",   ja: '強い霧雨です',     icon: 'rain' },
+    61: { en: "It's Raining Lightly",  ja: '小雨です',         icon: 'rain' },
+    63: { en: "It's Raining!",         ja: '雨です！',         icon: 'rain' },
+    65: { en: "It's Raining Hard!",    ja: '大雨です！',       icon: 'rain' },
+    71: { en: "It's Snowing Lightly",  ja: '小雪です',         icon: 'snow' },
+    73: { en: "It's Snowing!",         ja: '雪です！',         icon: 'snow' },
+    75: { en: "It's Snowing Hard!",    ja: '大雪です！',       icon: 'snow' },
+    77: { en: "It's Snowing",          ja: '雪です',           icon: 'snow' },
+    80: { en: "Rain Showers",          ja: 'にわか雨です',     icon: 'rain' },
+    81: { en: "Rain Showers",          ja: 'にわか雨です',     icon: 'rain' },
+    82: { en: "Heavy Showers!",        ja: '激しいにわか雨！', icon: 'rain' },
+    85: { en: "Snow Showers",          ja: 'にわか雪です',     icon: 'snow' },
+    86: { en: "Heavy Snow Showers!",   ja: '大雪です！',       icon: 'snow' },
+    95: { en: "It's Stormy!",          ja: '雷雨です！',       icon: 'thunder' },
+    96: { en: "It's Stormy!",          ja: '雷雨です！',       icon: 'thunder' },
+    99: { en: "It's Stormy!",          ja: '雷雨です！',       icon: 'thunder' },
+};
+
+function feelsLike(t: number): { en: string; ja: string } {
+    if (t < 0)  return { en: "It's Freezing!",      ja: '凍えそうです！' };
+    if (t < 8)  return { en: "It's Very Cold!",     ja: 'とても寒いです！' };
+    if (t < 14) return { en: "It's Cold!",          ja: '寒いです！' };
+    if (t < 20) return { en: "It's a Little Cool",  ja: '少し涼しいです' };
+    if (t < 25) return { en: "It's Nice!",          ja: '気持ちいいです！' };
+    if (t < 31) return { en: "It's a Little Hot",   ja: '少し暑いです' };
+    if (t < 36) return { en: "It's Hot!",           ja: '暑いです！' };
+    return              { en: "It's Very Hot!",      ja: 'とても暑いです！' };
+}
+
+const WEATHER_ICONS: Record<string, string> = {
+    sun: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="9" fill="#e8a838"/><g stroke="#e8a838" stroke-width="2.5" stroke-linecap="round"><line x1="24" y1="5" x2="24" y2="12"/><line x1="24" y1="36" x2="24" y2="43"/><line x1="5" y1="24" x2="12" y2="24"/><line x1="36" y1="24" x2="43" y2="24"/><line x1="10.1" y1="10.1" x2="15.4" y2="15.4"/><line x1="32.6" y1="32.6" x2="37.9" y2="37.9"/><line x1="37.9" y1="10.1" x2="32.6" y2="15.4"/><line x1="15.4" y1="32.6" x2="10.1" y2="37.9"/></g></svg>`,
+    'partly-cloudy': `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="17" cy="17" r="7" fill="#e8a838"/><g stroke="#e8a838" stroke-width="2" stroke-linecap="round"><line x1="17" y1="4" x2="17" y2="8"/><line x1="17" y1="26" x2="17" y2="30"/><line x1="4" y1="17" x2="8" y2="17"/><line x1="26" y1="17" x2="30" y2="17"/><line x1="8.5" y1="8.5" x2="11.5" y2="11.5"/><line x1="22.5" y1="22.5" x2="25.5" y2="25.5"/><line x1="25.5" y1="8.5" x2="22.5" y2="11.5"/><line x1="11.5" y1="22.5" x2="8.5" y2="25.5"/></g><path d="M16,40 Q10,40 10,34 Q10,28 17,28 Q19,22 25,22 Q31,22 33,27 Q38,27 40,32 Q41,40 35,40Z" fill="#99aab5"/></svg>`,
+    cloud: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8,36 Q2,36 2,29 Q2,22 9,22 Q11,14 21,14 Q30,14 33,21 Q40,20 43,26 Q45,36 37,36Z" fill="#99aab5"/></svg>`,
+    rain:  `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8,30 Q2,30 2,23 Q2,16 9,16 Q11,8 21,8 Q30,8 33,15 Q40,14 43,20 Q45,30 37,30Z" fill="#99aab5"/><g stroke="#5b9bd5" stroke-width="2.5" stroke-linecap="round"><line x1="15" y1="35" x2="12" y2="43"/><line x1="25" y1="35" x2="22" y2="43"/><line x1="35" y1="35" x2="32" y2="43"/></g></svg>`,
+    snow:  `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8,30 Q2,30 2,23 Q2,16 9,16 Q11,8 21,8 Q30,8 33,15 Q40,14 43,20 Q45,30 37,30Z" fill="#99aab5"/><g stroke="#a8d4f5" stroke-width="2" stroke-linecap="round"><line x1="13" y1="36" x2="13" y2="44"/><line x1="9" y1="40" x2="17" y2="40"/><line x1="25" y1="34" x2="25" y2="42"/><line x1="21" y1="38" x2="29" y2="38"/><line x1="37" y1="36" x2="37" y2="44"/><line x1="33" y1="40" x2="41" y2="40"/></g></svg>`,
+    thunder: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8,30 Q2,30 2,23 Q2,16 9,16 Q11,8 21,8 Q30,8 33,15 Q40,14 43,20 Q45,30 37,30Z" fill="#6b7a8d"/><path d="M27,30 L20,41 L25,41 L19,50 L34,37 L28,37Z" fill="#f5c842"/></svg>`,
+    fog:   `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g stroke="#aab0bb" stroke-width="3" stroke-linecap="round"><line x1="6" y1="12" x2="42" y2="12"/><line x1="4" y1="20" x2="44" y2="20"/><line x1="6" y1="28" x2="42" y2="28"/><line x1="4" y1="36" x2="44" y2="36"/></g></svg>`,
+};
+
+let weather: {
+    temp: number;
+    descEn: string; descJa: string;
+    icon: string;
+    feels: { en: string; ja: string };
+} | null = null;
+
+try {
+    const wRes = await fetch(WEATHER_API);
+    if (wRes.ok) {
+        const wData = await wRes.json() as any;
+        const c = wData.current;
+        const info = WMO[c.weathercode as number] ?? { en: 'Unknown', ja: '不明', icon: 'cloud' };
+        weather = {
+            temp:   Math.round(c.temperature_2m),
+            descEn: info.en,
+            descJa: info.ja,
+            icon:   info.icon,
+            feels:  feelsLike(c.apparent_temperature),
+        };
+    }
+} catch (_) {}
+
+// ── Today's Date ──
+const todayJST = new Date(Date.now() + 9 * 3_600_000);
+const EN_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const todayDate = todayJST.getUTCDate();
+const ordinalSuffix = (d: number) => {
+    const t = d % 100;
+    if (t >= 11 && t <= 13) return 'th';
+    return ['th','st','nd','rd','th','th','th','th','th','th'][d % 10];
+};
+
+// Cache until midnight JST (UTC+9)
+const nowMs = Date.now();
+const jstMidnight = new Date(nowMs + 9 * 3_600_000);
+jstMidnight.setUTCHours(24, 0, 0, 0);
+const ttl = Math.floor((jstMidnight.getTime() - 9 * 3_600_000 - nowMs) / 1000);
+Astro.response.headers.set('Cache-Control', `public, s-maxage=${ttl}, stale-while-revalidate=60`);
 ---
 
 <Layout
@@ -97,6 +244,20 @@ const word = dialectWords[dayIndex];
                                 </T>
                             </p>
                         </a>
+                        <a href="https://bloggydoggy.com/" class="site-card" target="_blank" rel="noopener">
+                            <h3>
+                                <T>
+                                    <span slot="en">English Blog</span>
+                                    <span slot="ja">英語ブログ</span>
+                                </T>
+                            </h3>
+                            <p>
+                                <T>
+                                    <span slot="en">A personal blog about life in Japan. Made for English learners, with a simple English mode.</span>
+                                    <span slot="ja">日本での生活を綴ったブログ。英語学習者向けに、やさしい英語モードもあります。</span>
+                                </T>
+                            </p>
+                        </a>
                     </div>
                 </section>
 
@@ -138,6 +299,20 @@ const word = dialectWords[dayIndex];
                                 <T>
                                     <span slot="en">Shinto shrines in and around Takko.</span>
                                     <span slot="ja">田子町の神社を紹介します。</span>
+                                </T>
+                            </p>
+                        </a>
+                        <a href="/takko-ben" class="site-card">
+                            <h3>
+                                <T>
+                                    <span slot="en">Town Dialect</span>
+                                    <span slot="ja">田子弁</span>
+                                </T>
+                            </h3>
+                            <p>
+                                <T>
+                                    <span slot="en">A pronunciation guide to Takko-ben, the local dialect.</span>
+                                    <span slot="ja">田子弁の発音ガイド</span>
                                 </T>
                             </p>
                         </a>
@@ -188,7 +363,58 @@ const word = dialectWords[dayIndex];
             </main>
 
             <aside class="page-sidebar">
-                <div class="wod-card">
+                {weather && (
+                    <div class="weather-card">
+                        <div class="weather-card-header">
+                            <p class="weather-card-title">
+                                <T>
+                                    <span slot="en">Takko Weather</span>
+                                    <span slot="ja">田子の天気</span>
+                                </T>
+                            </p>
+                        </div>
+                        <div class="weather-zone-icon">
+                            <div class="weather-icon" set:html={WEATHER_ICONS[weather.icon] ?? WEATHER_ICONS.cloud}></div>
+                            <div class="weather-desc">
+                                <T>
+                                    <span slot="en">{weather.descEn}</span>
+                                    <span slot="ja">{weather.descJa}</span>
+                                </T>
+                            </div>
+                        </div>
+                        <div class="weather-zone-temp">
+                            <div class="weather-temp">{weather.temp}°C</div>
+                            <div class="weather-feels">
+                                <T>
+                                    <span slot="en">{weather.feels.en}</span>
+                                    <span slot="ja">{weather.feels.ja}</span>
+                                </T>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div class="date-card">
+                    <div class="date-card-header">
+                        <p class="date-card-title">
+                            <T>
+                                <span slot="en">Today's Date</span>
+                                <span slot="ja">今日の日付</span>
+                            </T>
+                        </p>
+                    </div>
+                    <div class="date-card-body">
+                        <div class="cal-block">
+                            <div class="cal-month">
+                                <T>
+                                    <span slot="en">{EN_MONTHS[todayJST.getUTCMonth()]}</span>
+                                    <span slot="ja">{todayJST.getUTCMonth() + 1}月</span>
+                                </T>
+                            </div>
+                            <div class="cal-day">{todayDate}<span class="cal-ordinal">{ordinalSuffix(todayDate)}</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="wod-card" data-words={JSON.stringify(allWords)}>
                     <div class="wod-card-header">
                         <p class="wod-card-title">
                             <T>
@@ -200,7 +426,7 @@ const word = dialectWords[dayIndex];
                     <div class="wod-card-body">
                         <div class="wod-dialect">
                             <T>
-                                <span slot="en">{word.romanji}</span>
+                                <span slot="en">{word.romaji}</span>
                                 <span slot="ja">{word.dialect}</span>
                             </T>
                         </div>
@@ -326,20 +552,25 @@ const word = dialectWords[dayIndex];
     .page-body {
         display: grid;
         grid-template-columns: 1fr 300px;
-        gap: 0;
+        gap: 1.5rem;
         max-width: 1200px;
-        margin: 0 auto;
-        padding: 0;
-        align-items: stretch;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+        align-items: start;
     }
 
     .page-main {
         background: var(--color-bg);
+        border-radius: 24px;
         padding: 3rem 3rem 4rem 2rem;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.06);
     }
 
     .page-sidebar {
-        padding: 3rem 1rem 4rem 1rem;
+        background: #edf2ee;
+        border-radius: 24px;
+        padding: 2rem 1.25rem;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.06);
     }
 
     /* ── Sections ── */
@@ -436,18 +667,30 @@ const word = dialectWords[dayIndex];
 
     /* ── Word of the Day card ── */
     .wod-card {
-        position: sticky;
-        top: 1.5rem;
+        margin-top: 1.5rem;
         width: 100%;
         border-radius: 8px;
         overflow: hidden;
         border: 3px solid var(--color-secondary);
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         font-family: var(--font-main);
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    @keyframes wod-pop {
+        0%   { transform: scale(var(--wod-inflate, 1.06)); }
+        45%  { transform: scale(1.12); }
+        100% { transform: scale(1); }
+    }
+
+    .wod-card.wod-popping {
+        animation: wod-pop 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
     }
 
     .wod-card-header {
-        background: var(--color-primary);
+        background: #7a4f8a;
         padding: 0.85rem 1.25rem;
     }
 
@@ -479,8 +722,7 @@ const word = dialectWords[dayIndex];
         padding: 0.2rem 0.75rem;
         border-radius: 4px;
         text-align: center;
-        max-width: 100%;
-        word-break: break-word;
+        overflow-wrap: break-word;
     }
 
     .wod-sep {
@@ -499,8 +741,16 @@ const word = dialectWords[dayIndex];
         padding: 0.2rem 0.75rem;
         border-radius: 4px;
         text-align: center;
-        max-width: 100%;
-        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .wod-dialect :global(.t-ja),
+    .wod-standard :global(.t-ja) {
+        white-space: nowrap;
+    }
+
+    :global(body.lang-ja) .wod-card-body {
+        align-items: center;
     }
 
     @media (max-width: 900px) {
@@ -537,5 +787,221 @@ const word = dialectWords[dayIndex];
         .hero-ctas { flex-direction: column; align-items: center; }
     }
 
+    /* ── Weather card ── */
+    .weather-card {
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 3px solid var(--color-secondary);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        font-family: var(--font-main);
+    }
 
+    .weather-card-header {
+        background: #3e6b8f;
+        padding: 0.85rem 1.25rem;
+    }
+
+    .weather-card-title {
+        margin: 0;
+        color: white;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .weather-zone-icon {
+        background: #dce8f0;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .weather-zone-temp {
+        background: white;
+        padding: 0.9rem 1rem 1.1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    .weather-icon {
+        width: 52px;
+        height: 52px;
+    }
+
+    .weather-icon svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .weather-desc {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2d4f6b;
+        text-align: center;
+    }
+
+    .weather-temp {
+        font-size: 2.2rem;
+        font-weight: 600;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #3e6b8f;
+        line-height: 1;
+    }
+
+    .weather-feels {
+        font-size: 0.9rem;
+        font-family: var(--font-hand);
+        color: #888;
+    }
+
+    /* ── Date card ── */
+    .date-card {
+        margin-top: 1.5rem;
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 3px solid var(--color-secondary);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        font-family: var(--font-main);
+    }
+
+    .date-card-header {
+        background: var(--color-primary);
+        padding: 0.85rem 1.25rem;
+    }
+
+    .date-card-title {
+        margin: 0;
+        color: white;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .date-card-body {
+        background: white;
+        padding: 1.1rem 1.25rem 1.3rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    .cal-block {
+        width: 100%;
+        text-align: center;
+    }
+
+    .cal-month {
+        color: #3a6348;
+        font-size: 0.85rem;
+        font-weight: 600;
+        font-family: system-ui, -apple-system, sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid #c2dbc9;
+    }
+
+    .cal-day {
+        color: #2a2a2a;
+        font-size: 2rem;
+        font-weight: 700;
+        font-family: system-ui, -apple-system, sans-serif;
+        line-height: 1;
+        padding-top: 0.4rem;
+    }
+
+    .cal-ordinal {
+        font-size: 1rem;
+        font-weight: 600;
+        vertical-align: super;
+    }
 </style>
+
+<script>
+    const card = document.querySelector<HTMLElement>('.wod-card');
+    if (card) {
+        type Word = { dialect: string; romaji: string; standard: string; english: string };
+        const words: Word[] = JSON.parse(card.dataset.words ?? '[]');
+        const dialectEl  = card.querySelector<HTMLElement>('.wod-dialect');
+        const standardEl = card.querySelector<HTMLElement>('.wod-standard');
+
+        let currentIdx = -1;
+        let raf: number | null = null;
+        let holdStart = 0;
+        const HOLD_MS = 650;
+
+        function setScale(s: number) {
+            card!.style.transform = `scale(${s})`;
+        }
+
+        function swapWord() {
+            if (words.length < 2) return;
+            let next: number;
+            do { next = Math.floor(Math.random() * words.length); } while (next === currentIdx);
+            currentIdx = next;
+            const w = words[next];
+            if (dialectEl) {
+                dialectEl.querySelector('.t-en')!.textContent = w.romaji;
+                dialectEl.querySelector('.t-ja')!.textContent = w.dialect;
+            }
+            if (standardEl) {
+                standardEl.querySelector('.t-en')!.textContent = w.english;
+                standardEl.querySelector('.t-ja')!.textContent = w.standard;
+            }
+        }
+
+        function triggerPop(inflatedScale: number) {
+            raf = null;
+            swapWord();
+            card!.style.setProperty('--wod-inflate', inflatedScale.toString());
+            card!.classList.add('wod-popping');
+            card!.addEventListener('animationend', () => {
+                card!.classList.remove('wod-popping');
+                card!.style.transform = '';
+            }, { once: true });
+        }
+
+        function inflate(now: number) {
+            const t = Math.min((now - holdStart) / HOLD_MS, 1);
+            const scale = 1 + 0.06 * (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t);
+            setScale(scale);
+            if (t < 1) {
+                raf = requestAnimationFrame(inflate);
+            } else {
+                triggerPop(scale);
+            }
+        }
+
+        function startHold() {
+            if (raf !== null) return;
+            card!.style.transition = '';
+            holdStart = performance.now();
+            raf = requestAnimationFrame(inflate);
+        }
+
+        function cancelHold() {
+            if (raf === null) return;
+            cancelAnimationFrame(raf);
+            raf = null;
+            card!.style.transition = 'transform 0.18s ease-out';
+            setScale(1);
+            card!.addEventListener('transitionend', () => {
+                card!.style.transition = '';
+                card!.style.transform = '';
+            }, { once: true });
+        }
+
+        card.addEventListener('mousedown',  startHold);
+        card.addEventListener('mouseup',    cancelHold);
+        card.addEventListener('mouseleave', cancelHold);
+        card.addEventListener('touchstart', startHold,  { passive: true });
+        card.addEventListener('touchend',   cancelHold);
+        card.addEventListener('touchcancel',cancelHold);
+        card.addEventListener('selectstart', e => e.preventDefault());
+    }
+</script>
