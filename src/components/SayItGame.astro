@@ -4,6 +4,7 @@
 
 <!-- Config screen -->
 <div class="config-screen" id="sig-config">
+  <a href="/game" class="back-link" data-astro-reload>← Back</a>
   <div class="config-card">
     <h1 class="config-title">Letter or Not?</h1>
     <p class="config-sub">Is it a letter? Say <strong>YES</strong> or <strong>NO</strong>!</p>
@@ -114,6 +115,7 @@
     position: fixed;
     inset: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     background: var(--sig-bg);
@@ -124,6 +126,25 @@
   }
 
   .config-screen.hidden { display: none; }
+
+  .back-link {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--sig-ink);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: background 0.15s;
+  }
+
+  .back-link:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
 
   .config-card {
     width: min(400px, 100%);

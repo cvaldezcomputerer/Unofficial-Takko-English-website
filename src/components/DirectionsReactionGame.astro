@@ -22,6 +22,8 @@ const BAD_FEEDBACK_IMAGES = [badcat1.src, badcat2.src, badcat3.src, badcat10.src
   data-good-images={JSON.stringify(GOOD_FEEDBACK_IMAGES)}
   data-bad-images={JSON.stringify(BAD_FEEDBACK_IMAGES)}
 >
+  <a href="/game" class="back-link" data-astro-reload>← Back</a>
+
   <header class="hud">
     <div class="hud-card time-card">
       <span class="hud-label">時間</span>
@@ -82,6 +84,24 @@ const BAD_FEEDBACK_IMAGES = [badcat1.src, badcat2.src, badcat3.src, badcat10.src
 </div>
 
 <style>
+  .back-link {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 8px;
+    background: var(--panel, #fffdf7);
+    border: 2px solid rgba(212, 163, 115, 0.45);
+    color: var(--ink, #2f2a24);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: background 0.15s;
+  }
+
+  .back-link:hover {
+    background: var(--bg-2, #f6eddc);
+  }
+
   .reaction-game {
     --bg-1: #fffbf0;
     --bg-2: #f6eddc;
